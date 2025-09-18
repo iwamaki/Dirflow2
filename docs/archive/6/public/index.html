@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI File Manager - Refactored</title>
+    <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <button class="btn-circle hidden" id="backBtn">←</button>
+            <div class="current-path" id="currentPath">/workspace</div>
+            <div class="selection-info" id="selectionInfo">1件選択中</div>
+        </div>
+        <div class="header-right">
+            <button class="btn-circle hidden" id="saveBtn">💾</button>
+            <button class="btn-circle hidden" id="editBtn">✏️</button>
+            <button class="btn-circle" id="settingsBtn">⚙️</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="file-list-container" id="fileListContainer">
+            <div id="fileList"></div>
+        </div>
+
+        <div class="file-view" id="fileView">
+            <div class="file-content" id="fileContent"></div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="chat-container" id="chatContainer">
+            <input type="text" class="chat-input" id="chatInput" placeholder="メッセージを入力してください...">
+            <button class="send-btn" id="sendBtn">送信</button>
+        </div>
+
+        <div class="action-container" id="actionContainer">
+            <button class="action-btn" data-action="copy">📋 コピー</button>
+            <button class="action-btn" data-action="rename">✏️ 名前変更</button>
+            <button class="action-btn danger" data-action="delete">🗑️ 削除</button>
+            <button class="btn secondary" id="cancelBtn">キャンセル</button>
+        </div>
+    </div>
+
+    <!-- FAB メニュー拡張 -->
+    <button class="fab" id="fabBtn" title="メニューを開く">+</button>
+    
+    <!-- FABメニューオーバーレイ -->
+    <div class="fab-menu-overlay" id="fabMenuOverlay"></div>
+    
+    <!-- FABメニュー -->
+    <div class="fab-menu" id="fabMenu">
+        <div class="fab-menu-item" data-action="system-prompt">
+            <div class="fab-menu-icon">🧠</div>
+            <div class="fab-menu-text">システムプロンプト</div>
+        </div>
+        <div class="fab-menu-item" data-action="import">
+            <div class="fab-menu-icon">📂</div>
+            <div class="fab-menu-text">インポート</div>
+        </div>
+        <div class="fab-menu-item" data-action="create">
+            <div class="fab-menu-icon">📝</div>
+            <div class="fab-menu-text">新規作成</div>
+        </div>
+    </div>
+
+    <div class="chat-overlay" id="chatOverlay">
+        <div class="chat-area">
+            <div class="chat-header">
+                <div class="modal-title">💬 AI チャット</div>
+                <button class="modal-close" id="chatCloseBtn">×</button>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="message system">AI File Manager - Refactored が開始されました。</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">⚙️ 設定</div>
+                <button class="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600;">🎨 テーマ</label>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn" data-theme="dark">ダーク</button>
+                        <button class="btn secondary" data-theme="light">ライト</button>
+                    </div>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600;">📝 フォントサイズ</label>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn secondary" data-font="small">小</button>
+                        <button class="btn" data-font="medium">中</button>
+                        <button class="btn secondary" data-font="large">大</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="createModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📝 新規ファイル作成</div>
+                <button class="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">ファイルパス</label>
+                    <input type="text" class="input" id="filePathInput" placeholder="例: documents/notes.md">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">初期コンテンツ（省略可）</label>
+                    <textarea class="input" id="fileContentInput" rows="4" placeholder="ファイルの初期内容..."></textarea>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button class="btn secondary" data-modal="close">キャンセル</button>
+                    <button class="btn" id="createFileBtn">作成</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="renameModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">✏️ 名前変更</div>
+                <button class="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">新しい名前</label>
+                    <input type="text" class="input" id="renameInput" placeholder="新しいファイル名">
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button class="btn secondary" data-modal="close">キャンセル</button>
+                    <button class="btn" id="renameFileBtn">変更</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- インポートモーダル -->
+    <div class="modal" id="importModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📂 外部ファイルインポート</div>
+                <button class="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">ファイル選択</label>
+                    <input type="file" class="input" id="fileImportInput" multiple accept=".txt,.md,.json,.js,.html,.css,.py">
+                    <div style="font-size: calc(var(--font-size) - 1px); color: var(--text-muted); margin-top: 6px;">
+                        サポートされている形式のファイルを複数選択可能です。
+                    </div>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">インポート先フォルダ（省略可）</label>
+                    <input type="text" class="input" id="importPathInput" placeholder="例: imported-files">
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button class="btn secondary" data-modal="close">キャンセル</button>
+                    <button class="btn" id="confirmImport">インポート</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- システムプロンプトモーダル -->
+    <div class="modal" id="systemPromptModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">🧠 システムプロンプト登録</div>
+                <button class="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">プロンプト名</label>
+                    <input type="text" class="input" id="promptNameInput" placeholder="例: コードレビュー">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">システムプロンプト</label>
+                    <textarea class="input" id="promptContentInput" rows="8" placeholder="あなたは優秀なプログラマーです..."></textarea>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">説明（省略可）</label>
+                    <textarea class="input" id="promptDescriptionInput" rows="3" placeholder="このプロンプトの用途を説明..."></textarea>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button class="btn secondary" data-modal="close">キャンセル</button>
+                    <button class="btn" id="confirmSystemPrompt">登録</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- リファクタリング済みJavaScriptファイル -->
+    <script src="./src/config.js"></script>
+    <script src="./src/state.js"></script>
+    <script src="./src/utils.js"></script>
+    <script src="./src/ui-controller.js"></script>
+    <script src="./src/message-handler.js"></script>
+    <script src="./src/event-handler.js"></script>
+    <script src="./src/app.js"></script>
+</body>
+</html>

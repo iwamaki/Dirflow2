@@ -1,0 +1,93 @@
+<svg width="375" height="667" viewBox="0 0 375 667" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <rect width="375" height="667" fill="#1a1a1a"/>
+  
+  <!-- ヘッダー -->
+  <rect x="0" y="0" width="375" height="70" fill="#2a2a2a" stroke="#333" stroke-width="1"/>
+  <circle cx="40" cy="35" r="18" fill="none" stroke="#4fc3f7" stroke-width="1"/>
+  <text x="35" y="40" fill="#4fc3f7" font-family="Arial" font-size="16">←</text>
+  <rect x="70" y="20" width="120" height="30" rx="15" fill="#333" stroke="#4fc3f7" stroke-width="1"/>
+  <text x="80" y="38" fill="#e0e0e0" font-family="monospace" font-size="12">/workspace</text>
+  <circle cx="320" cy="35" r="18" fill="none" stroke="#4fc3f7" stroke-width="1"/>
+  <text x="315" y="40" fill="#4fc3f7" font-family="Arial" font-size="16">💾</text>
+  <circle cx="350" cy="35" r="18" fill="none" stroke="#4fc3f7" stroke-width="1"/>
+  <text x="345" y="40" fill="#4fc3f7" font-family="Arial" font-size="16">✏️</text>
+  
+  <!-- ファイルコンテンツエリア -->
+  <rect x="0" y="70" width="375" height="527" fill="#333"/>
+  
+  <!-- 文書内容 - 通常のテキスト -->
+  <text x="20" y="100" fill="#e0e0e0" font-family="monospace" font-size="14"># AI File Manager</text>
+  <text x="20" y="125" fill="#e0e0e0" font-family="monospace" font-size="14"></text>
+  <text x="20" y="150" fill="#e0e0e0" font-family="monospace" font-size="14">## 概要</text>
+  
+  <!-- 差分表示エリア1 -->
+  <!-- 削除された行 (赤背景) -->
+  <rect x="15" y="170" width="345" height="20" fill="#4a1a1a" stroke="#d32f2f" stroke-width="1" opacity="0.8"/>
+  <text x="20" y="184" fill="#ff6b6b" font-family="monospace" font-size="14">- これは古いファイルマネージャーです</text>
+
+  
+  <!-- 追加された行 (緑背景) -->
+  <rect x="15" y="195" width="345" height="20" fill="#1a4a1a" stroke="#4caf50" stroke-width="1" opacity="0.8"/>
+  <text x="20" y="209" fill="#4caf50" font-family="monospace" font-size="14">+ これは新しいAI統合ファイルマネージャーです</text>
+  <!-- チェックボックス (未選択) -->
+  <rect x="340" y="150" width="12" height="12" fill="none" stroke="#2196f3" stroke-width="1" rx="2"/>
+  
+  <!-- 通常のテキスト -->
+  <text x="20" y="235" fill="#e0e0e0" font-family="monospace" font-size="14"></text>
+  <text x="20" y="260" fill="#e0e0e0" font-family="monospace" font-size="14">## 機能</text>
+  
+  <!-- 差分表示エリア2 -->
+  <!-- 削除された行 -->
+  <rect x="15" y="280" width="345" height="20" fill="#4a1a1a" stroke="#d32f2f" stroke-width="1" opacity="0.8"/>
+  <text x="20" y="294" fill="#ff6b6b" font-family="monospace" font-size="14" text-decoration="line-through">- 基本的なファイル操作</text>
+
+  
+  <!-- 追加された行 -->
+  <rect x="15" y="305" width="345" height="20" fill="#1a4a1a" stroke="#4caf50" stroke-width="1" opacity="0.8"/>
+  <text x="20" y="319" fill="#4caf50" font-family="monospace" font-size="14">+ AI統合ファイル操作とチャット機能</text>
+  <!-- チェックボックス (選択済み) -->
+  <rect x="340" y="260" width="12" height="12" fill="#2196f3" stroke="#2196f3" stroke-width="1" rx="2"/>
+  <text x="343" y="268" fill="white" font-family="Arial" font-size="8">✓</text>
+  
+  <!-- 通常のテキスト -->
+  <text x="20" y="345" fill="#e0e0e0" font-family="monospace" font-size="14">- 複数選択対応</text>
+  <text x="20" y="370" fill="#e0e0e0" font-family="monospace" font-size="14">- 一括操作</text>
+  
+  <!-- 差分表示エリア3 -->
+  <!-- 削除された行 -->
+  <rect x="15" y="390" width="345" height="20" fill="#4a1a1a" stroke="#d32f2f" stroke-width="1" opacity="0.8"/>
+  <text x="20" y="404" fill="#ff6b6b" font-family="monospace" font-size="14" >- シンプルなUI</text>
+
+  
+  <!-- 追加された行 -->
+  <rect x="15" y="415" width="345" height="20" fill="#1a4a1a" stroke="#4caf50" stroke-width="1" opacity="0.8"/>
+  <text x="20" y="429" fill="#4caf50" font-family="monospace" font-size="14">+ モダンで直感的なUI設計</text>
+  <!-- チェックボックス (未選択) -->
+  <rect x="340" y="370" width="12" height="12" fill="none" stroke="#2196f3" stroke-width="1" rx="2"/>
+  
+  <!-- 通常のテキスト -->
+  <text x="20" y="455" fill="#e0e0e0" font-family="monospace" font-size="14"></text>
+  <text x="20" y="480" fill="#e0e0e0" font-family="monospace" font-size="14">## 使い方</text>
+  <text x="20" y="505" fill="#e0e0e0" font-family="monospace" font-size="14">...</text>
+  
+  <!-- 差分操作ボタンエリア (右下に配置) -->
+  <!-- All ☑ ボタン -->
+  <rect x="230" y="540" width="60" height="30" rx="6" fill="#1976d2" stroke="#2196f3" stroke-width="1"/>
+  <text x="245" y="559" fill="white" font-family="Arial" font-size="12" font-weight="bold">All ☑</text>
+  
+  <!-- 適用 ボタン -->
+  <rect x="300" y="540" width="50" height="30" rx="6" fill="#4caf50" stroke="#66bb6a" stroke-width="1"/>
+  <text x="315" y="559" fill="white" font-family="Arial" font-size="12" font-weight="bold">適用</text>
+  
+  <!-- ボトムナビゲーション -->
+  <rect x="0" y="597" width="375" height="70" fill="#2a2a2a" stroke="#333" stroke-width="1"/>
+  <!-- チャット入力エリア -->
+  <rect x="20" y="612" width="280" height="40" rx="20" fill="#333" stroke="#4fc3f7" stroke-width="1"/>
+  <text x="30" y="635" fill="#9e9e9e" font-family="Arial" font-size="14">メッセージを入力してください...</text>
+  <!-- 送信ボタン -->
+  <rect x="310" y="612" width="45" height="40" rx="20" fill="#4fc3f7"/>
+  <text x="325" y="635" fill="white" font-family="Arial" font-size="12" font-weight="bold">送信</text>
+  
+
+</svg>
