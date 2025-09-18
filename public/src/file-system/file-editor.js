@@ -211,6 +211,7 @@ export class FileEditor {
             elements.editBtn.classList.remove('hidden');
             elements.saveBtn.classList.remove('hidden');
             elements.settingsBtn.classList.add('hidden');
+            elements.fabBtn.classList.add('hidden'); 
         } else {
             elements.fileListContainer.style.display = 'block';
             elements.fileView.style.display = 'none';
@@ -218,7 +219,8 @@ export class FileEditor {
             elements.editBtn.classList.add('hidden');
             elements.saveBtn.classList.add('hidden');
             elements.settingsBtn.classList.remove('hidden');
-
+            elements.fabBtn.classList.remove('hidden');
+            
             // ファイルビューを閉じる時は編集内容をクリア
             if (window.EventHandlers) {
                 window.EventHandlers.currentEditingContent = null;

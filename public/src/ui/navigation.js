@@ -78,7 +78,9 @@ export class NavigationController {
             elements.chatContainer.style.display = 'flex';
             elements.actionContainer.style.display = 'none';
             elements.selectionInfo.style.display = 'none';
-            elements.fabBtn.classList.remove('hidden');
+            if (!AppState.isFileViewMode) {
+                elements.fabBtn.classList.remove('hidden');
+            }
 
             document.querySelectorAll('.file-item').forEach(item => {
                 item.classList.remove('selected');
