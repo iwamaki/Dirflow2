@@ -4,43 +4,13 @@
 
 /*
 ## 概要
-アプリケーション内の様々なUI要素からのイベントを一元的に処理し、対応する機能（ナビゲーション、ファイル操作、モーダル表示など）を呼び出すクラス。
+アプリケーション内の様々なUI要素からのイベントを一元的に処理し、対応する機能を呼び出すクラス。
 
-## 主要機能
-- **クラス**: EventHandlers (静的メソッドのみ)
-- **主要メソッド**:
-  - `init()`: アプリケーション起動時に全ての主要なイベントリスナーを設定する。ヘッダーボタン、チャット入力、FABメニュー、ファイル作成/リネーム/インポート、システムプロンプト関連、モーダル閉じる、ESCキー操作など、多岐にわたるイベントを網羅する。
-  - `togglePromptDrawer()`: プロンプト管理ドロワーの表示/非表示を切り替える。
-  - `handleSaveClick()`: ファイル編集内容の保存ボタンがクリックされた際の処理。変更がある場合は差分表示モードに切り替え、ユーザーに確認を促す。
-  - `toggleEditMode()`: ファイル内容の編集モードとプレビューモードを切り替える。差分モードからの復帰もサポート。
-  - `getOriginalFileContent()`: 現在編集中のファイルのオリジナルコンテンツを取得する。
-  - `handleFileAction(action)`: ファイル操作（コピー、移動、リネーム、削除、一括操作）を実行する。
-  - `handleCreateFile()`: ファイルまたはディレクトリの作成処理を実行する。
-  - `handleRename()`: ファイルまたはディレクトリの名前変更処理を実行する。
-  - `toggleFabMenu()`: FAB（Floating Action Button）メニューの表示/非表示を切り替える。
-  - `handleFabMenuClick(e)`: FABメニュー内の項目がクリックされた際の処理。ファイル作成、インポート、システムプロンプトモーダルの表示など。
-  - `handleImport()`: ファイルのインポート処理を実行する。
-  - `handleSystemPrompt()`: システムプロンプトの登録または更新処理を実行する。
-
-## 依存関係
-- **インポート**:
-  - `elements`, `mockFileSystem` (from '../core/config.js'): DOM要素参照とモックファイルシステムデータ。
-  - `AppState`, `SystemPromptManager` (from '../core/state.js'): アプリケーションの状態管理とシステムプロンプト管理。
-  - `Helpers` (from '../utils/helpers.js'): ユーティリティ関数。
-  - `NavigationController` (from '../ui/navigation.js'): UIナビゲーション制御。
-  - `ModalController` (from '../ui/modals.js'): モーダル表示制御。
-  - `FileViewController` (from '../ui/file-view.js'): ファイル内容表示制御。
-  - `FileManagerController` (from '../file-system/file-manager.js'): ファイルシステム操作。
-  - `DiffViewer` (from '../file-system/diff-viewer.js'): 差分表示機能。
-  - `MessageProcessor` (from '../api/message-processor.js'): メッセージ処理。
-  - `PromptUIController` (from '../prompts/prompt-ui.js'): プロンプトUI制御。
-- **エクスポート**: EventHandlersクラス
-
-## 特記事項
-- イベントの一元管理: アプリケーションのほとんどのユーザーインタラクションがこのクラスで処理される。
-- 状態との連携: `AppState` を利用してアプリケーションの状態を適切に更新し、UIの挙動を制御する。
-- モーダルとドロワー: 各種モーダルやドロワーの表示/非表示、およびそれらの中での操作も管理する。
-- ファイル操作の統合: 単一ファイル操作から一括操作まで、幅広いファイルシステム関連イベントを処理する。
+## 責任
+- アプリケーション起動時の主要なイベントリスナーの設定
+- ファイル操作（保存、編集モード切り替え、作成、リネーム、インポート、削除など）のハンドリング
+- FABメニュー、モーダル、プロンプト管理ドロワーの表示/非表示制御
+- キーボードイベント（ESCキーなど）の処理
 */
 
 import { elements, mockFileSystem } from '../core/config.js';

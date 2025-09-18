@@ -6,40 +6,12 @@
 ## 概要
 ユーザーメッセージの送信、AI応答の受信、コマンド実行、メッセージ表示を担当するクラス。
 
-## 主要機能
-- **クラス**: MessageProcessor (静的メソッドのみ)
-- **主要メソッド**:
-  - `addMessage(type, content)`: UIにメッセージを表示。システムメッセージはフィルタリングされる場合あり。
-  - `sendMessage()`: ユーザーメッセージを送信し、AI応答を取得、表示、コマンドを実行。
-  - `getCustomPromptContext()`: カスタムプロンプトのコンテキストを取得。
-  - `executeCommands(commands)`: AIから受け取ったコマンドを順次実行。
-  - `validateCommand(command)`: コマンドのバリデーション（アクション、パスのセキュリティチェック）。
-  - `executeCommand(command)`: 個別のコマンド（ファイル操作など）を実行。
-  - `readFile(path)`: ファイルの内容を読み込む。
-  - `editFile(path, content)`: ファイルの内容を編集し、差分表示を更新。
-  - `listFiles(path)`: 指定されたパスのファイル一覧を取得。
-  - `getCurrentFileList()`: 現在のディレクトリのファイルリストを取得。
-  - `getCurrentFileContent()`: 現在編集中のファイルの内容を取得。
-  - `setLoading(loading)`: ローディング状態を設定し、UIを更新。
-  - `joinPath(basePath, ...segments)`: パスを結合するヘルパーメソッド。
-
-## 依存関係
-- **インポート**:
-  - `elements`, `mockFileSystem` (from '../core/config.js'): UI要素とモックファイルシステム。
-  - `AppState`, `ConversationHistory`, `SystemPromptManager` (from '../core/state.js'): アプリケーションの状態、会話履歴、システムプロンプト管理。
-  - `MarkdownUtils` (from '../utils/markdown.js'): Markdownのパース。
-  - `APIClient` (from './client.js'): API通信クライアント。
-  - `FileManagerController` (from '../file-system/file-manager.js'): ファイルシステム操作。
-  - `DiffViewer` (from '../file-system/diff-viewer.js'): 差分表示。
-- **エクスポート**: MessageProcessorクラス
-
-## 特記事項
-- メッセージフィルタリング: システムメッセージはUI表示キーワードに基づいてフィルタリングされる。
-- コマンド実行: AIからのコマンドを動的に実行し、ファイルシステム操作を行う。
-- エラーハンドリング: コマンド実行時やAPI通信時のエラーを捕捉し、ユーザーに通知。
-- 状態管理: AppStateと連携し、アプリケーションの状態（ローディング、ファイル情報など）を更新。
-- セキュリティ: コマンド実行前にパスのセキュリティチェックを実施。
-- 差分表示: ファイル編集時にDiffViewerと連携し、変更内容を視覚的に表示。
+## 責任
+- UIへのメッセージ表示
+- ユーザーメッセージの送信とAI応答の処理
+- AIから受け取ったコマンドの実行とバリデーション
+- ファイルシステム操作（読み込み、編集、一覧表示など）
+- アプリケーションのローディング状態管理
 */
 
 import { elements, mockFileSystem } from '../core/config.js';

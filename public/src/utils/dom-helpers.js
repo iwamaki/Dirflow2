@@ -4,36 +4,15 @@
 
 /*
 ## 概要
-DOM（Document Object Model）操作を簡素化し、再利用可能なヘルパー関数を提供するモジュール。HTMLエスケープ、要素の可視性チェック、スクロール調整、クラス・スタイル・属性の一括操作、要素の作成・削除、イベントリスナー設定など、多岐にわたる機能を提供する。
+DOM（Document Object Model）操作を簡素化し、再利用可能なヘルパー関数を提供するモジュール。
 
-## 主要機能
-- **クラス**: DOMHelpers (DOM操作に関するユーティリティメソッドを提供する)
-- **主要メソッド**:
-  - `escapeHtml(text)`: テキストをHTMLエスケープする。
-  - `isElementVisible(element)`: 要素が現在表示されているかどうかをチェックする。
-  - `scrollIntoView(element, options)`: 要素がビューポート内にスクロールされるように調整する。
-  - `toggleClass(elements, className, force)`: 要素のクラスを切り替える（複数要素対応）。
-  - `setStyles(element, styles)`: 要素のスタイルを複数同時に設定する。
-  - `setAttributes(element, attributes)`: 要素の属性を複数同時に設定する。
-  - `createElement(tagName, options)`: 新しいDOM要素を作成し、クラス、属性、スタイル、内容、子要素を一度に設定する。
-  - `addEventListeners(element, events)`: 要素に複数のイベントリスナーを一括で設定する。
-  - `getFormData(form)`: フォーム要素からデータをオブジェクトとして取得する。
-  - `removeElement(element)`: 指定されたDOM要素を削除する。
-  - `$(selector, context)`: `querySelector` のショートハンド。
-  - `$(selector, context)`: `querySelectorAll` のショートハンドで、結果を配列として返す。
-  - `isDescendant(child, parent)`: ある要素が別の要素の子孫であるかをチェックする。
-  - `getElementPosition(element)`: 要素の画面上の位置とサイズを取得する。
-  - `fadeIn(element, duration)`: 要素をフェードインさせるアニメーション。
-  - `fadeOut(element, duration)`: 要素をフェードアウトさせるアニメーション。
-
-## 依存関係
-- **インポート**: なし
-- **エクスポート**: DOMHelpersクラス
-
-## 特記事項
-- 汎用性: 特定のUIコンポーネントに依存せず、様々なDOM操作に利用できる汎用的なヘルパー関数を提供する。
-- コードの簡素化: 複雑になりがちなDOM操作を簡潔なAPIで提供し、コードの可読性と保守性を向上させる。
-- パフォーマンス: アニメーション機能など、ユーザー体験を向上させるための機能も含まれる。
+## 責任
+- HTMLエスケープ処理
+- 要素の可視性チェックとスクロール調整
+- クラス、スタイル、属性の一括操作
+- DOM要素の作成、削除、イベントリスナー設定
+- フォームデータの取得
+- 要素の位置情報取得とアニメーション（フェードイン/アウト）
 */
 
 export class DOMHelpers {

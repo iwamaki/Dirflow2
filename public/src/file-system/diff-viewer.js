@@ -4,41 +4,14 @@
 
 /*
 ## 概要
-ファイルの内容変更における差分を検出し、視覚的に表示・管理するためのモジュール。ユーザーが変更ブロックを選択的に適用できる機能を提供する。
+ファイルの内容変更における差分を検出し、視覚的に表示・管理するためのモジュール。
 
-## 主要機能
-- **クラス**: DiffManager (差分ブロックの選択状態を管理し、選択された変更のみを適用する)
-- **クラス**: DiffViewer (差分表示モードの制御、差分生成、HTMLレンダリング、選択された変更の適用を行う)
-- **主要メソッド (DiffManager)**:
-  - `initializeDiff()`: 差分表示の初期化。デフォルトですべての変更ブロックを選択状態にする。
-  - `toggleBlockSelection(blockId)`: 特定の変更ブロックの選択状態を切り替える。
-  - `toggleAllSelection()`: 全ての変更ブロックの選択/解除を切り替える。
-  - `updateAllCheckboxes()`: 全ての差分チェックボックスのUI状態を更新する。
-  - `updateSelectionUI()`: 選択状態に応じたUI（ボタンのテキスト、適用ボタンの有効/無効）を更新する。
-  - `generateSelectedContent()`: 選択された変更ブロックのみを適用して新しいファイル内容を生成する。
-  - `reset()`: 選択状態をリセットする。
-- **主要メソッド (DiffViewer)**:
-  - `setDiffMode(enabled, originalContent, newContent)`: 差分表示モードの有効/無効を切り替える。有効化時には差分を生成し、UIを更新する。
-  - `generateDiff(originalText, newText)`: 2つのテキスト間の行単位の差分を生成する（LCSアルゴリズムを使用）。
-  - `computeLCS(arr1, arr2)`: 最長共通部分列（LCS）を計算する。
-  - `renderDiffAsHtml(diffArray)`: 生成された差分データをHTML形式でレンダリングする。
-  - `showDiffView()`: 差分ビューをUIに表示する。
-  - `applySelectedChanges()`: ユーザーが選択した変更ブロックのみをファイルに適用し、保存する。
-
-## 依存関係
-- **インポート**:
-  - `elements`, `mockFileSystem` (from '../core/config.js'): DOM要素参照とモックファイルシステムデータ。
-  - `AppState` (from '../core/state.js'): アプリケーションの状態管理。
-  - `DOMHelpers` (from '../utils/dom-helpers.js'): DOM操作ヘルパー。
-  - `NavigationController` (from '../ui/navigation.js'): UIナビゲーション制御。
-  - `FileViewController` (from '../ui/file-view.js'): ファイル内容表示制御。
-  - `FileManagerController` (from './file-manager.js'): ファイル操作管理。
-- **エクスポート**: DiffManager, DiffViewerクラス
-
-## 特記事項
-- 選択的適用: ユーザーは差分表示された変更の中から、適用したい部分だけを選択してファイルに反映できる。
-- LCSアルゴリズム: 差分検出には最長共通部分列（LCS）アルゴリズムが用いられている。
-- UI統合: `AppState` と連携し、編集モードからの差分表示、差分からの編集モード復帰など、シームレスなUI体験を提供する。
+## 責任
+- ファイルの差分検出と生成（LCSアルゴリズムを使用）
+- 差分情報のHTMLレンダリングとUI表示
+- ユーザーによる変更ブロックの選択と選択状態の管理
+- 選択された変更のみを適用した新しいファイル内容の生成と保存
+- 差分表示モードの有効/無効切り替え
 */
 
 import { elements, mockFileSystem } from '../core/config.js';

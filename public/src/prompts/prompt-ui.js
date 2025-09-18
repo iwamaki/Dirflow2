@@ -4,35 +4,15 @@
 
 /*
 ## 概要
-カスタムプロンプト管理に関連するUI要素（ドロワー、プロンプト一覧、モーダルなど）の表示と操作を制御するモジュール。`SystemPromptManager` と連携し、ユーザーがプロンプトを視覚的に管理できるようにする。
+カスタムプロンプト管理に関連するUI要素の表示と操作を制御するモジュール。
 
-## 主要機能
-- **クラス**: PromptUIController (プロンプト関連UIの表示・操作を制御する)
-- **主要メソッド**:
-  - `toggleDrawer(forceOpen)`: システムプロンプト管理ドロワーの開閉を制御する。
-  - `switchSection(section)`: ドロワー内のセクション（新規作成、管理、ワークフロー）を切り替える。
-  - `refreshPromptList()`: カスタムプロンプトの一覧を再取得し、UIを更新する。
-  - `createPromptCardHTML(prompt)`: 個々のプロンプトカードのHTMLを生成する。
-  - `setupPromptCardEvents()`: プロンプトカードに対するイベントリスナーを設定する。
-  - `selectPrompt(promptId)`: プロンプトを選択または選択解除し、UIと状態を更新する。
-  - `handlePromptAction(action, promptId)`: プロンプトカード内のアクションボタン（選択、編集、削除）のクリックを処理する。
-  - `editPrompt(promptId)`: 指定されたプロンプトの情報を編集モーダルにロードし、編集モードにする。
-  - `deletePrompt(promptId)`: 指定されたプロンプトを削除する。
-  - `updateCurrentPromptStatus()`: 現在選択されているカスタムプロンプトの状態をUIに表示する。
-  - `initializeModal()`: プロンプト関連モーダルを初期状態にリセットする。
-
-## 依存関係
-- **インポート**:
-  - `elements` (from '../core/config.js'): DOM要素参照。
-  - `AppState` (from '../core/state.js'): アプリケーションの状態管理。
-  - `SystemPromptManager` (from './prompt-manager.js'): カスタムプロンプトの管理ロジック。
-  - `DOMHelpers` (from '../utils/dom-helpers.js'): DOM操作ヘルパー。
-- **エクスポート**: PromptUIControllerクラス
-
-## 特記事項
-- UIとロジックの分離: プロンプトデータの管理は `SystemPromptManager` が行い、このモジュールはUIの表示とユーザーインタラクションに特化している。
-- 動的なUI更新: プロンプトの追加、更新、削除、選択に応じて、プロンプト一覧やステータス表示がリアルタイムで更新される。
-- 編集モード: 既存プロンプトの編集時には、新規作成セクションを再利用し、ボタンのテキストやデータ属性を切り替えることで編集モードを表現する。
+## 責任
+- システムプロンプト管理ドロワーの開閉制御
+- ドロワー内のセクション切り替え（新規作成、管理、ワークフロー）
+- カスタムプロンプト一覧の表示と更新
+- プロンプトカードのHTML生成とイベント設定
+- プロンプトの選択、編集、削除といったUIアクションのハンドリング
+- 現在選択されているプロンプトの状態表示更新
 */
 
 import { elements } from '../core/config.js';

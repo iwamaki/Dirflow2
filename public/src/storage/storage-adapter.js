@@ -5,13 +5,13 @@
 /*
 ## 概要
 IndexedDBを使用したファイルシステムデータの永続化アダプター。
-mockFileSystemからの移行を可能にし、統一されたAPIを提供する。
 
 ## 責任
 - IndexedDBの初期化と管理
-- ファイル/ディレクトリの永続化
-- 既存のmockFileSystemとの互換性維持
-- データの移行機能
+- ファイルおよびディレクトリのCRUD操作（作成、読み込み、更新、削除）
+- mockFileSystemからのデータ移行と互換性維持
+- ファイル/ディレクトリの移動とコピー
+- ストレージ統計情報の提供
 */
 
 export class StorageAdapter {
@@ -443,7 +443,8 @@ export class StorageAdapter {
         }
 
         const name = parts[parts.length - 1];
-        const parent = parts.slice(0, -1).join('/');
+        const parentParts = parts.slice(0, -1);
+        const parent = parentParts.length > 0 ? '/' + parentParts.join('/') : '';
         return { parent, name };
     }
 

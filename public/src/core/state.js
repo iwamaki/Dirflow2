@@ -4,31 +4,13 @@
 
 /*
 ## 概要
-アプリケーションの様々な状態（UI状態、ファイルシステム状態、設定、会話履歴など）を一元的に管理するモジュール。`AppState` オブジェクトと `ConversationHistory` クラスを提供する。
+アプリケーションの様々な状態（UI状態、ファイルシステム状態、設定、会話履歴など）を一元的に管理するモジュール。
 
-## 主要機能
-- **オブジェクト**: AppState (アプリケーションの現在の状態を保持し、更新・保存する)
-- **クラス**: ConversationHistory (ユーザーとAI間の会話履歴を管理し、永続化する)
-- **主要メソッド (AppState)**:
-  - `setState(updates)`: AppStateのプロパティを更新し、設定をローカルストレージに保存する。
-  - `saveSettings()`: 現在のAppStateの設定をローカルストレージに保存する。
-- **主要メソッド (ConversationHistory)**:
-  - `addExchange(userMessage, aiResponse)`: 会話のやり取りを履歴に追加し、履歴数を制限する。
-  - `getHistory()`: 現在の会話履歴を返す。
-  - `clearHistory()`: 会話履歴をクリアする。
-  - `save()`: 会話履歴をローカルストレージに保存する。
-  - `shouldWarnAboutHistory()`: 会話履歴が警告閾値を超えているか判定する。
-  - `getHistoryStatus()`: 会話履歴の現在の状態（件数、最大数、警告フラグ）を返す。
-
-## 依存関係
-- **インポート**: `SystemPromptManager` (from '../prompts/prompt-manager.js')
-- **エクスポート**: AppState, ConversationHistory, SystemPromptManager
-
-## 特記事項
-- 永続化: `AppState` の設定と `ConversationHistory` はローカルストレージに保存され、アプリケーションを再起動しても状態が維持される。
-- 状態の一元管理: アプリケーションのほぼ全ての動的なデータがこのモジュールで管理される。
-- 循環依存の回避: `MessageProcessor` との循環依存を避けるため、`MessageProcessor` は `window` オブジェクト経由で参照される場合がある。
-- プロンプト管理: `SystemPromptManager` は別のモジュールに移動されたが、後方互換性のためここからもエクスポートされる。
+## 責任
+- アプリケーションの現在の状態（AppState）の保持と更新
+- ユーザーとAI間の会話履歴（ConversationHistory）の管理と永続化
+- 各種設定のローカルストレージへの保存と読み込み
+- システムプロンプト関連の状態管理
 */
 
 // アプリケーション状態管理

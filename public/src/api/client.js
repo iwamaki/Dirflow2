@@ -4,29 +4,13 @@
 
 /*
 ## 概要
-LLMプロバイダーとのAPI通信を管理するクライアントクラス
+LLMプロバイダーとのAPI通信を管理するクライアントクラス。
 
-## 主要機能
-- **クラス**: APIClient (静的メソッドのみ)
-- **主要メソッド**:
-  - `sendChatMessage(message, context)`: チャットメッセージを送信し、会話履歴を管理
-  - `loadProviders()`: 利用可能なLLMプロバイダーを取得し、AppStateに設定
-  - `checkHealth()`: APIのヘルスチェックを実行
-
-## 依存関係
-- **インポート**:
-  - `AppState` (from '../core/state.js'): LLMプロバイダーやモデルの状態管理 
-   - 使用メソッド: setState, get llmProvider, llmModel
-  - `ConversationHistory` (from '../core/state.js'): 会話履歴の管理
-   - 使用メソッド: getHistory, addExchange
-- **エクスポート**: APIClientクラス
-
-## 特記事項
-- エラーハンドリング: fetch失敗時にコンソールエラー出力と例外スロー
-- 状態同期: AppStateとConversationHistoryを自動更新
-- 非同期処理: すべてのメソッドがPromiseベース
+## 責任
+- チャットメッセージの送信
+- 利用可能なLLMプロバイダーの取得と状態管理
+- APIのヘルスチェック
 */
-
 import { AppState, ConversationHistory } from '../core/state.js';
 
 // API通信クラス

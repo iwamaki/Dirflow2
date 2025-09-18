@@ -4,14 +4,13 @@
 
 /*
 ## 概要
-既存のmockFileSystemからIndexedDBへのデータ移行、
-および緊急時のデータリカバリ機能を提供する。
+アプリケーションのデータ移行とリカバリ機能を提供するモジュール。
 
 ## 責任
-- mockFileSystemからIndexedDBへの移行
-- データの整合性チェック
-- 移行進捗の表示
-- エラーハンドリングとリカバリ
+- 既存データ（mockFileSystem）からIndexedDBへの移行
+- データのエクスポートとインポート
+- ストレージ情報の取得とIndexedDBのクリア
+- 移行状況の管理と進捗表示
 */
 
 import { storageManager } from '../core/config.js';

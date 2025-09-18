@@ -1,24 +1,16 @@
 /* =========================================
-    設定とグローバルデータ（IndexedDB対応版）
+    設定とグローバルデータ
    ========================================= */
 
 /*
 ## 概要
 アプリケーション全体で使用される設定、ストレージ管理、およびDOM要素への参照を一元的に管理するモジュール。
 
-## 主要機能
-- **ストレージ管理**: IndexedDBと従来のメモリストレージの統合管理
-- **定数**: mockFileSystem (フォールバック用データ)
-- **定数**: elements (主要なDOM要素への参照を格納するオブジェクト)
-
-## 依存関係
-- **インポート**: StorageAdapter (IndexedDB対応)
-- **エクスポート**: storageManager, mockFileSystem, elements
-
-## 特記事項
-- IndexedDB: 永続化ストレージとしてIndexedDBを優先使用
-- フォールバック: IndexedDB利用不可時はメモリストレージを使用
-- 移行機能: 既存のmockFileSystemからIndexedDBへの自動移行
+## 責任
+- アプリケーション設定の定義
+- IndexedDBとメモリストレージの統合管理
+- 主要なDOM要素への参照提供
+- 既存データからIndexedDBへの移行処理
 */
 
 import { storageAdapter } from '../storage/storage-adapter.js';

@@ -4,40 +4,14 @@
 
 /*
 ## 概要
-アプリケーション内のファイルシステム（モックデータ）に対するCRUD操作（作成、読み込み、更新、削除）およびファイル表示を管理するモジュール。ファイルリストの表示、ファイルアイコンの取得、ファイル選択、ファイル内容の保存などの機能を提供する。
+アプリケーション内のファイルシステムに対するCRUD操作およびファイル表示を管理するモジュール。
 
-## 主要機能
-- **クラス**: FileManagerController (ファイルシステム操作と表示を制御する)
-- **主要メソッド**:
-  - `loadFileList()`: 現在のパスに基づいてファイルリストを読み込み、UIに表示する。
-  - `displayFiles(files)`: 指定されたファイルリストをUIにレンダリングする。
-  - `createFileItem(file)`: 個々のファイルまたはディレクトリのDOM要素を作成する。
-  - `selectFile(file, itemElement)`: ファイルを選択状態にする（単一選択・複数選択対応）。
-  - `handleFileClick(file, event)`: ファイルまたはディレクトリがクリックされた際の処理。ディレクトリの場合は移動、ファイルの場合は開く。
-  - `openFile(filename)`: 指定されたファイルの内容を読み込み、ファイルビューに表示する。
-  - `getFileIcon(file)`: ファイルの拡張子に基づいて適切なアイコン（絵文字）を返す。
-  - `createFile(filePath, content)`: 指定されたパスに新しいファイルを作成する。中間ディレクトリも自動作成。
-  - `createDirectory(dirPath)`: 指定されたパスに新しいディレクトリを作成する。中間ディレクトリも自動作成。
-  - `copyFile(sourcePath, destPath)`: ファイルまたはディレクトリをコピーする。
-  - `moveFile(sourcePath, destPath)`: ファイルまたはディレクトリを移動する（コピー後に元を削除）。
-  - `deleteFile(filePath)`: 指定されたファイルまたはディレクトリを削除する。
-  - `formatFileSize(bytes)`: バイト数を読みやすい形式（KB, MBなど）にフォーマットする。
-  - `saveFile()`: 現在編集中のファイルの内容を保存する。
-
-## 依存関係
-- **インポート**:
-  - `elements`, `mockFileSystem` (from '../core/config.js'): DOM要素参照とモックファイルシステムデータ。
-  - `AppState` (from '../core/state.js'): アプリケーションの状態管理。
-  - `Helpers` (from '../utils/helpers.js'): ユーティリティ関数。
-  - `FileViewController` (from '../ui/file-view.js'): ファイル内容表示制御。
-  - `NavigationController` (from '../ui/navigation.js'): UIナビゲーション制御。
-- **エクスポート**: FileManagerControllerクラス
-
-## 特記事項
-- モックファイルシステム: 実際のファイルシステムではなく、`mockFileSystem` オブジェクト（`config.js`で定義）を操作する。
-- UIとの連携: `FileViewController` や `NavigationController` と密接に連携し、ファイル操作の結果をUIに反映させる。
-- 複数選択と長押し: ユーザーがファイルを複数選択したり、長押しで操作メニューを表示したりする機能に対応。
-- パス解決: 相対パスと絶対パスの両方に対応し、適切なファイルパスを解決する。
+## 責任
+- ファイルリストの読み込みとUI表示
+- ファイルおよびディレクトリの作成、コピー、移動、削除
+- ファイル内容の読み込みと保存
+- ファイル選択（単一・複数）とクリックイベントのハンドリング
+- ファイルアイコンの取得とファイルサイズのフォーマット
 */
 
 import { elements, storageManager } from '../core/config.js';
@@ -49,6 +23,7 @@ import { NavigationController } from '../ui/navigation.js';
 export class FileManagerController {
     // ファイルリスト読み込み（IndexedDB対応）
     static async loadFileList() {
+        console.log('FileManagerController: Loading file list for path:', AppState.currentPath);
         elements.fileList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--accent-primary);">読み込み中...</div>';
         await Helpers.delay(300);
 
@@ -278,8 +253,7 @@ export class FileManagerController {
         } catch (error) {
             console.error('Failed to create directory:', error);
             throw error;
-        }
-    }
+        }    
 
     }
 

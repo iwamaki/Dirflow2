@@ -4,29 +4,14 @@
 
 /*
 ## 概要
-AI File Managerアプリケーションの初期化と起動を担当するクラス。各種コンポーネントの初期設定、イベントリスナーの登録、初期メッセージの表示を行う。
+AI File Managerアプリケーションの初期化と起動を担当するクラス。
 
-## 主要機能
-- **クラス**: App (静的メソッドのみ)
-- **主要メソッド**:
-  - `init()`: アプリケーションの初期化処理を実行。プロバイダーの読み込み、テーマ適用、イベントリスナー設定、ファイルリスト読み込み、ウェルカムメッセージ表示を行う。
-  - `showWelcomeMessage()`: アプリケーション起動時のウェルカムメッセージをAI応答形式で表示。現在のAI設定や利用可能なコマンドの概要をユーザーに伝える。
-  - `showErrorMessage(error)`: 初期化中に発生したエラーメッセージをUIに表示。
-
-## 依存関係
-- **インポート**:
-  - `AppState`, `ConversationHistory` (from './state.js'): アプリケーションの状態管理と会話履歴。
-  - `APIClient` (from '../api/client.js'): API通信クライアント。
-  - `NavigationController` (from '../ui/navigation.js'): UIナビゲーションとテーマ適用。
-  - `FileManagerController` (from '../file-system/file-manager.js'): ファイルシステム操作。
-  - `MessageProcessor` (from '../api/message-processor.js'): メッセージの表示と処理。
-  - `EventHandlers` (from '../events/event-handlers.js'): イベントリスナーの登録。
-- **エクスポート**: Appクラス
-
-## 特記事項
-- DOMContentLoadedイベント: DOMの読み込み完了後に `App.init()` が自動的に実行される。
-- エラーハンドリング: 初期化失敗時にエラーメッセージを表示し、コンソールにも出力。
-- ユーザーガイダンス: ウェルカムメッセージを通じて、アプリケーションの機能と使い方をユーザーに提示。
+## 責任
+- アプリケーションの初期設定（プロバイダー読み込み、テーマ適用など）
+- イベントリスナーの登録
+- ファイルリストの読み込み
+- ウェルカムメッセージの表示
+- 初期化中のエラーハンドリング
 */
 
 import { AppState, ConversationHistory } from './state.js';

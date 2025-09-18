@@ -4,30 +4,13 @@
 
 /*
 ## 概要
-Markdown形式のテキストを処理するためのユーティリティ関数を提供するモジュール。MarkdownからHTMLへの変換、プレーンテキストの抽出、HTMLからMarkdownへの変換、目次生成、画像・リンクURLの抽出、文字数カウント、読了時間推定など、多岐にわたる機能を提供する。
+Markdown形式のテキストを処理するためのユーティリティ関数を提供するモジュール。
 
-## 主要機能
-- **クラス**: MarkdownUtils (Markdown処理に関するユーティリティメソッドを提供する)
-- **主要メソッド**:
-  - `parse(text)`: Markdown形式のテキストを簡易的にHTMLに変換する。
-  - `toPlainText(markdown)`: Markdownから書式設定を除去したプレーンテキストを抽出する。
-  - `fromHtml(html)`: HTMLを基本的なMarkdown形式に変換する。
-  - `processNode(node)`: `fromHtml` で使用される再帰的なノード処理関数。
-  - `generateToc(markdown)`: Markdownの見出しから目次データを生成する。
-  - `generateId(text)`: 見出しテキストからURLフレンドリーなIDを生成する。
-  - `extractImageUrls(markdown)`: Markdown内の画像URLを抽出する。
-  - `extractLinkUrls(markdown)`: Markdown内のリンクURLを抽出する。
-  - `countWords(markdown)`: Markdownから抽出したプレーンテキストの単語数をカウントする。
-  - `estimateReadingTime(markdown, wordsPerMinute)`: Markdownの読了時間を推定する。
-
-## 依存関係
-- **インポート**: なし
-- **エクスポート**: MarkdownUtilsクラス
-
-## 特記事項
-- 簡易パーサー: 完全なMarkdownパーサーではないが、一般的なMarkdown記法に対応し、HTMLへの変換やテキスト抽出を効率的に行う。
-- 双方向変換: MarkdownとHTML間の基本的な変換機能を提供し、コンテンツの柔軟な扱いを可能にする。
-- コンテンツ分析: 目次生成、画像・リンク抽出、単語数カウント、読了時間推定など、Markdownコンテンツの分析に役立つ機能を提供する。
+## 責任
+- MarkdownからHTMLへの変換
+- Markdownからプレーンテキストの抽出
+- HTMLからMarkdownへの変換
+- Markdownコンテンツの分析（目次生成、URL抽出、単語数カウント、読了時間推定）
 */
 
 export class MarkdownUtils {
