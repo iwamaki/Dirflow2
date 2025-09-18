@@ -345,34 +345,28 @@ export class FileEditor {
         DiffManager.initializeDiff();
 
         const diff = AppState.currentDiff;
-        const addedLines = diff.filter(line => line.type === 'added').length;
-        const deletedLines = diff.filter(line => line.type === 'deleted').length;
-        const totalChanges = addedLines + deletedLines;
+        const totalChanges = new Set(diff.filter(line => line.changeBlockId !== null).map(line => line.changeBlockId)).size;
 
-        const statsHtml = `
-            <div class="diff-stats">
-                <span class="added">+${addedLines}</span> /
-                <span class="deleted">-${deletedLines}</span> 変更
-            </div>
-        `;
-
+        // シンプルなツールバー（統計情報除去）
         const toolbarHtml = `
             <div class="diff-toolbar">
-                <div class="diff-toolbar-left">
-                    <h3 style="margin: 0; color: var(--text-primary);">📊 差分適用</h3>
-                    ${statsHtml}
-                </div>
-                <div class="diff-toolbar-right">
-                    <button class="diff-btn diff-all-btn" onclick="DiffManager.toggleAllSelection()">☑ All</button>
-                    <button class="diff-btn" onclick="FileEditor.cancelDiff()">❌ キャンセル</button>
-                    <button class="diff-btn primary diff-apply-btn" onclick="FileEditor.applySelectedChanges()">✅ 適用 (${totalChanges}件)</button>
+                <div class="diff-toolbar-buttons">
+                    <button class="diff-btn diff-all-btn" onclick="DiffManager.toggleAllSelection()">
+                        ☑ All
+                    </button>
+                    <button class="diff-btn" onclick="FileEditor.cancelDiff()">
+                        ❌ キャンセル
+                    </button>
+                    <button class="diff-btn primary diff-apply-btn" onclick="FileEditor.applySelectedChanges()">
+                        ✅ 適用 (${totalChanges}件)
+                    </button>
                 </div>
             </div>
         `;
 
         const diffHtml = this.renderDiffAsHtml(diff);
-
-        elements.fileContent.innerHTML = toolbarHtml + diffHtml;
+        
+        elements.fileContent.innerHTML = diffHtml + toolbarHtml;
 
         setTimeout(() => {
             DiffManager.updateSelectionUI();
