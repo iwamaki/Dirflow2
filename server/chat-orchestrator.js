@@ -32,11 +32,25 @@ export class ChatOrchestrator {
      */
     async processChat(message, provider = 'claude', model, context = {}) {
         try {
+            // デバッグ: 受信したコンテキストをログ出力
+            console.log('🔍 Chat Orchestrator - Received context:', {
+                currentPath: context.currentPath,
+                fileListLength: context.fileList ? context.fileList.length : 'undefined',
+                fileList: context.fileList
+            });
+
             // 1. 入力バリデーション
             this._validateInput(message, provider, model, context);
 
             // 2. 会話コンテキストの準備
             const enrichedContext = await this.conversationManager.prepareContext(context);
+
+            // デバッグ: エンリッチされたコンテキストをログ出力
+            console.log('🔍 Chat Orchestrator - Enriched context:', {
+                currentPath: enrichedContext.currentPath,
+                fileListLength: enrichedContext.fileList ? enrichedContext.fileList.length : 'undefined',
+                fileList: enrichedContext.fileList
+            });
             
             // 3. 新しいチャット提案の判定
             const shouldSuggestNewChat = this.conversationManager.shouldSuggestNewChat(enrichedContext);

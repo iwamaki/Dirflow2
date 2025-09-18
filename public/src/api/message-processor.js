@@ -14,7 +14,7 @@
 - アプリケーションのローディング状態管理
 */
 
-import { elements, mockFileSystem } from '../core/config.js';
+import { elements, mockFileSystem, storageManager } from '../core/config.js';
 import { AppState, ConversationHistory, SystemPromptManager } from '../core/state.js';
 import { MarkdownUtils } from '../utils/markdown.js';
 import { APIClient } from './client.js';
@@ -71,10 +71,15 @@ export class MessageProcessor {
 
         try {
             // 現在のコンテキストを詳細に収集
-            const currentFileContent = this.getCurrentFileContent();
+            console.log('🔍 Getting current file content...');
+            const currentFileContent = await this.getCurrentFileContent(); // awaitを追加
+            console.log('🔍 Getting file list...');
+            const fileList = await this.getCurrentFileList();
+            console.log('📋 File list retrieved:', fileList);
+            console.log('📋 File list details:', JSON.stringify(fileList, null, 2));
             const context = {
                 currentPath: AppState.currentPath,
-                fileList: this.getCurrentFileList(),
+                fileList: fileList,
                 currentFile: AppState.currentEditingFile,
                 currentFileContent: currentFileContent,
                 isEditMode: AppState.isEditMode,
@@ -82,7 +87,7 @@ export class MessageProcessor {
                 timestamp: new Date().toISOString(),
                 // 現在開いているファイルの詳細情報をメッセージに含める
                 openFileInfo: currentFileContent ? `現在開いているファイル: ${currentFileContent.filename} (${currentFileContent.size})\n内容:\n${currentFileContent.content}` : null,
-                
+
                 // カスタムプロンプト関連コンテキスト
                 customPrompt: this.getCustomPromptContext()
             };
@@ -351,32 +356,77 @@ export class MessageProcessor {
     }
 
     // ヘルパーメソッド
-    static getCurrentFileList() {
-        const files = mockFileSystem[AppState.currentPath] || [];
-        return files.map(file => ({
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            hasContent: file.content !== undefined
-        }));
+    static async getCurrentFileList() {
+        try {
+            console.log('📂 getCurrentFileList: Starting, currentPath:', AppState.currentPath);
+            // storageManagerを使用してIndexedDBからファイル一覧を取得
+            await storageManager.ensureInitialized();
+            console.log('✅ StorageManager initialized');
+
+            const adapter = storageManager.getAdapter();
+            console.log('🔧 Adapter retrieved:', adapter);
+
+            const files = await adapter.listChildren(AppState.currentPath);
+            console.log('📄 Raw files from adapter:', files);
+
+            const result = files.map(file => ({
+                name: file.name,
+                type: file.type,
+                size: file.size || '',
+                hasContent: file.content !== undefined
+            }));
+            console.log('📋 Processed file list:', result);
+            return result;
+        } catch (error) {
+            console.error('❌ Failed to get file list from storage:', error);
+            console.warn('🔄 Falling back to mockFileSystem');
+            // フォールバック：mockFileSystemを使用
+            const files = mockFileSystem[AppState.currentPath] || [];
+            console.log('📂 MockFileSystem files:', files);
+            return files.map(file => ({
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                hasContent: file.content !== undefined
+            }));
+        }
     }
 
-    static getCurrentFileContent() {
+    static async getCurrentFileContent() {
         // 現在開いているファイルの内容を取得
         if (!AppState.currentEditingFile) return null;
-        
-        const files = mockFileSystem[AppState.currentPath] || [];
-        const file = files.find(f => f.name === AppState.currentEditingFile);
-        
-        if (file && file.content !== undefined) {
-            return {
-                filename: file.name,
-                content: file.content,
-                size: file.size,
-                type: file.type
-            };
+
+        try {
+            // storageManagerを使用してIndexedDBからファイル内容を取得
+            await storageManager.ensureInitialized();
+            const adapter = storageManager.getAdapter();
+            const filePath = `${AppState.currentPath}/${AppState.currentEditingFile}`.replace(/\/+/g, '/');
+            const file = await adapter.getItem(filePath);
+
+            if (file && file.content !== undefined) {
+                return {
+                    filename: file.name,
+                    content: file.content,
+                    size: file.size || '',
+                    type: file.type
+                };
+            }
+        } catch (error) {
+            console.warn('Failed to get current file content from storage, falling back to mockFileSystem:', error);
+            // フォールバック：mockFileSystemを使用
+            const files = mockFileSystem[AppState.currentPath] || [];
+            const file = files.find(f => f.name === AppState.currentEditingFile);
+
+            if (file && file.content !== undefined) {
+                return {
+                    filename: file.name,
+                    content: file.content,
+                    size: file.size,
+                    type: file.type
+                };
+            }
         }
-        
+
         return null;
     }
 
