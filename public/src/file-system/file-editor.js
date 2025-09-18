@@ -22,12 +22,11 @@ import { DOMHelpers } from '../utils/dom-helpers.js';
 import { NavigationController } from '../ui/navigation.js';
 import { FileManagerController } from './file-manager.js';
 
-// ファイル表示モード列挙
+// ファイル表示モード列挙（DIFFモードを削除）
 const ViewMode = {
     CONTENT: 'content',      // コンテンツ表示（マークダウン形式）
-    EDIT: 'edit',           // 編集画面
-    PREVIEW: 'preview',     // プレビュー画面（差分をマークダウン形式）
-    DIFF: 'diff'           // 差分適用画面
+    EDIT: 'edit',           // 編集画面（差分表示含む）
+    PREVIEW: 'preview'      // プレビュー画面
 };
 
 // 拡張子別ビューア設定
@@ -270,9 +269,7 @@ export class FileEditor {
             case ViewMode.PREVIEW:
                 this.showPreviewMode(content, filename);
                 break;
-            case ViewMode.DIFF:
-                this.showDiffMode();
-                break;
+            // DIFF case削除
         }
     }
 
@@ -306,6 +303,16 @@ export class FileEditor {
             return;
         }
 
+        // 差分モードかどうかで表示を分岐
+        if (AppState.isDiffMode) {
+            this.showEditModeWithDiff(content, filename);
+        } else {
+            this.showNormalEditMode(content, filename);
+        }
+    }
+
+    // 通常の編集モード表示
+    static showNormalEditMode(content, filename) {
         elements.fileContent.innerHTML = `<textarea placeholder="ファイルの内容を編集してください...">${DOMHelpers.escapeHtml(content)}</textarea>`;
 
         const textarea = elements.fileContent.querySelector('textarea');
@@ -321,6 +328,47 @@ export class FileEditor {
         elements.editBtn.textContent = '👁️';
         elements.editBtn.title = 'プレビュー';
         elements.saveBtn.classList.remove('hidden');
+    }
+
+    // 差分表示付き編集モード
+    static showEditModeWithDiff(content, filename) {
+        if (!AppState.currentDiff) return;
+
+        DiffManager.initializeDiff();
+        const diff = AppState.currentDiff;
+        const totalChanges = new Set(diff.filter(line => line.changeBlockId !== null).map(line => line.changeBlockId)).size;
+
+        // テキストエリアと差分表示を統合したレイアウト（ボタンを下に移動）
+        elements.fileContent.innerHTML = `
+            <div class="edit-diff-container">
+                <div class="edit-diff-content">
+                    <div class="diff-preview">
+                        ${this.renderDiffAsHtml(diff)}
+                    </div>
+                </div>
+                <div class="edit-diff-footer">
+                    <div class="diff-controls">
+                        <button class="diff-btn diff-all-btn" onclick="DiffManager.toggleAllSelection()">
+                            ☑ All
+                        </button>
+                        <button class="diff-btn" onclick="FileEditor.cancelDiff()">
+                            ❌ キャンセル
+                        </button>
+                        <button class="diff-btn primary diff-apply-btn" onclick="FileEditor.applySelectedChanges()">
+                            ✅ 適用 (${totalChanges}件)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        elements.editBtn.textContent = '✏️';
+        elements.editBtn.title = '通常編集に戻る';
+        elements.saveBtn.classList.add('hidden');
+
+        setTimeout(() => {
+            DiffManager.updateSelectionUI();
+        }, 100);
     }
 
     // プレビューモード（拡張子に応じた表示のみ）
@@ -339,38 +387,17 @@ export class FileEditor {
     }
 
     // 差分適用モード
-    static showDiffMode() {
-        if (!AppState.currentDiff) return;
-
-        DiffManager.initializeDiff();
-
-        const diff = AppState.currentDiff;
-        const totalChanges = new Set(diff.filter(line => line.changeBlockId !== null).map(line => line.changeBlockId)).size;
-
-        // シンプルなツールバー（統計情報除去）
-        const toolbarHtml = `
-            <div class="diff-toolbar">
-                <div class="diff-toolbar-buttons">
-                    <button class="diff-btn diff-all-btn" onclick="DiffManager.toggleAllSelection()">
-                        ☑ All
-                    </button>
-                    <button class="diff-btn" onclick="FileEditor.cancelDiff()">
-                        ❌ キャンセル
-                    </button>
-                    <button class="diff-btn primary diff-apply-btn" onclick="FileEditor.applySelectedChanges()">
-                        ✅ 適用 (${totalChanges}件)
-                    </button>
-                </div>
-            </div>
-        `;
-
-        const diffHtml = this.renderDiffAsHtml(diff);
-        
-        elements.fileContent.innerHTML = diffHtml + toolbarHtml;
-
-        setTimeout(() => {
-            DiffManager.updateSelectionUI();
-        }, 100);
+    static switchToDiffMode() {
+        if (this.originalContent !== this.currentContent) {
+            const diff = this.generateDiff(this.originalContent, this.currentContent);
+            AppState.setState({
+                currentDiff: diff,
+                isDiffMode: true,
+                isEditMode: true // 編集モードのままにする
+            });
+            this.currentViewMode = ViewMode.EDIT; // EDITモードを維持
+            this.showEditMode(this.currentContent, AppState.currentEditingFile);
+        }
     }
 
     // モード切り替えメソッド
@@ -390,18 +417,6 @@ export class FileEditor {
         this.currentViewMode = ViewMode.CONTENT;
         AppState.setState({ isEditMode: false, isDiffMode: false });
         this.showFileContent(this.currentContent, AppState.currentEditingFile);
-    }
-
-    static switchToDiffMode() {
-        if (this.originalContent !== this.currentContent) {
-            const diff = this.generateDiff(this.originalContent, this.currentContent);
-            AppState.setState({
-                currentDiff: diff,
-                isDiffMode: true
-            });
-            this.currentViewMode = ViewMode.DIFF;
-            this.showDiffMode();
-        }
     }
 
     // 差分生成
@@ -516,7 +531,7 @@ export class FileEditor {
         return lcs;
     }
 
-    // 差分HTML生成
+    // 差分HTML生成（チェックボックスを右側に移動）
     static renderDiffAsHtml(diffArray) {
         let html = '<div class="diff-container">';
         let processedBlocks = new Set();
@@ -561,10 +576,10 @@ export class FileEditor {
             const escapedContent = DOMHelpers.escapeHtml(line.content);
             html += `
                 <div class="${className}" data-line-index="${index}" data-block-id="${line.changeBlockId}">
-                    ${checkbox}
                     <span class="diff-line-number">${lineNumber}</span>
                     <span class="diff-prefix">${prefix}</span>
                     <span class="diff-content">${escapedContent}</span>
+                    ${checkbox}
                 </div>
             `;
         });
@@ -622,7 +637,6 @@ export class FileEditor {
 
     // 差分キャンセル
     static cancelDiff() {
-
         // 差分関連の状態をクリア
         AppState.setState({ 
             isDiffMode: false,
@@ -630,7 +644,8 @@ export class FileEditor {
         });
         DiffManager.reset();
         
-        this.switchToEditMode();
+        // 編集モードを再表示（差分なしで）
+        this.showEditMode(this.currentContent, AppState.currentEditingFile);
     }
 
     // ファイルを開く
