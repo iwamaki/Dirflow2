@@ -40,23 +40,30 @@
 - パス解決: 相対パスと絶対パスの両方に対応し、適切なファイルパスを解決する。
 */
 
-import { elements, mockFileSystem } from '../core/config.js';
+import { elements, storageManager } from '../core/config.js';
 import { AppState } from '../core/state.js';
 import { Helpers } from '../utils/helpers.js';
 import { FileViewController } from '../ui/file-view.js';
 import { NavigationController } from '../ui/navigation.js';
 
 export class FileManagerController {
-    // ファイルリスト読み込み
+    // ファイルリスト読み込み（IndexedDB対応）
     static async loadFileList() {
         elements.fileList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--accent-primary);">読み込み中...</div>';
         await Helpers.delay(300);
 
-        let files = mockFileSystem[AppState.currentPath] || [];
-        this.displayFiles(files);
-        elements.currentPath.textContent = AppState.currentPath;
+        try {
+            await storageManager.ensureInitialized();
+            const adapter = storageManager.getAdapter();
+            const files = await adapter.listChildren(AppState.currentPath);
+            this.displayFiles(files);
+            elements.currentPath.textContent = AppState.currentPath;
 
-        NavigationController.setSelectionMode(false);
+            NavigationController.setSelectionMode(false);
+        } catch (error) {
+            console.error('Failed to load file list:', error);
+            elements.fileList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--error);">ファイル一覧の読み込みに失敗しました</div>';
+        }
     }
 
     static displayFiles(files) {
@@ -177,32 +184,35 @@ export class FileManagerController {
         }
     }
 
-    static openFile(filename) {
-        const files = mockFileSystem[AppState.currentPath] || [];
-        const file = files.find(f => f.name === filename);
+    static async openFile(filename) {
+        try {
+            await storageManager.ensureInitialized();
+            const adapter = storageManager.getAdapter();
+            const filePath = Helpers.joinPath(AppState.currentPath, filename);
 
-        if (!file || file.content === undefined) {
+            const content = await adapter.readFile(filePath);
+
+            // 新しいファイルを開く時は編集内容をクリア
+            if (window.EventHandlers) {
+                window.EventHandlers.currentEditingContent = null;
+            }
+
+            AppState.setState({
+                currentEditingFile: filename,
+                isEditMode: false
+            });
+
+            FileViewController.setFileViewMode(true);
+            FileViewController.showFileContent(content, filename);
+
+            if (window.MessageProcessor) {
+                window.MessageProcessor.addMessage('system', `📖 "${filename}" を開きました。`);
+            }
+        } catch (error) {
+            console.error('Failed to open file:', error);
             if (window.MessageProcessor) {
                 window.MessageProcessor.addMessage('system', `⚠️ ファイル "${filename}" を読み込めませんでした。`);
             }
-            return;
-        }
-
-        // 新しいファイルを開く時は編集内容をクリア
-        if (window.EventHandlers) {
-            window.EventHandlers.currentEditingContent = null;
-        }
-
-        AppState.setState({
-            currentEditingFile: filename,
-            isEditMode: false
-        });
-
-        FileViewController.setFileViewMode(true);
-        FileViewController.showFileContent(file.content, filename);
-
-        if (window.MessageProcessor) {
-            window.MessageProcessor.addMessage('system', `📖 "${filename}" を開きました。`);
         }
     }
 
@@ -219,222 +229,154 @@ export class FileManagerController {
         return icons[ext] || '📄';
     }
 
-    // ファイル作成
+    // ファイル作成（IndexedDB対応）
     static async createFile(filePath, content = '') {
         await Helpers.delay(500);
 
-        const fullPath = filePath.startsWith('/') ? filePath : Helpers.joinPath(AppState.currentPath, filePath);
-        const pathSegments = fullPath.split('/').filter(segment => segment !== '');
+        try {
+            await storageManager.ensureInitialized();
+            const adapter = storageManager.getAdapter();
 
-        const fileName = pathSegments.pop();
-        const directorySegments = pathSegments;
+            const fullPath = filePath.startsWith('/') ? filePath : Helpers.joinPath(AppState.currentPath, filePath);
 
-        let currentPath = '';
-
-        // Create intermediate directories
-        for (const segment of directorySegments) {
-            const parentPath = currentPath;
-            currentPath += (currentPath === '' ? '/' : '/') + segment;
-
-            if (!mockFileSystem[currentPath]) {
-                mockFileSystem[currentPath] = [];
+            // 既存ファイルの確認
+            const existingFile = await adapter.getItem(fullPath);
+            if (existingFile) {
+                throw new Error(`ファイル "${filePath}" は既に存在します`);
             }
 
-            if (parentPath !== '') {
-                const parentDirFiles = mockFileSystem[parentPath];
-                if (parentDirFiles && !parentDirFiles.some(f => f.name === segment && f.type === 'directory')) {
-                    parentDirFiles.push({
-                        name: segment,
-                        type: 'directory',
-                        size: ''
-                    });
-                }
-            }
+            // ファイル作成
+            await adapter.createFile(fullPath, content);
+
+            return filePath;
+        } catch (error) {
+            console.error('Failed to create file:', error);
+            throw error;
         }
-
-        const targetDirectoryPath = currentPath;
-
-        const existingFile = mockFileSystem[targetDirectoryPath]?.find(f => f.name === fileName);
-        if (existingFile) {
-            throw new Error(`ファイル "${fileName}" は既に存在します`);
-        }
-
-        const sizeInBytes = new Blob([content]).size;
-        const formattedSize = this.formatFileSize(sizeInBytes);
-
-        if (!mockFileSystem[targetDirectoryPath]) {
-            mockFileSystem[targetDirectoryPath] = [];
-        }
-
-        mockFileSystem[targetDirectoryPath].push({
-            name: fileName,
-            type: 'file',
-            size: formattedSize,
-            content: content
-        });
-
-        return fileName;
     }
 
-    // ディレクトリ作成
+    // ディレクトリ作成（IndexedDB対応）
     static async createDirectory(dirPath) {
         await Helpers.delay(500);
 
-        const fullPath = dirPath.startsWith('/') ? dirPath : Helpers.joinPath(AppState.currentPath, dirPath);
-        const pathSegments = fullPath.split('/').filter(segment => segment !== '');
+        try {
+            await storageManager.ensureInitialized();
+            const adapter = storageManager.getAdapter();
 
-        const dirName = pathSegments.pop();
-        const parentSegments = pathSegments;
+            const fullPath = dirPath.startsWith('/') ? dirPath : Helpers.joinPath(AppState.currentPath, dirPath);
 
-        let currentPath = '';
-
-        // Create intermediate directories
-        for (const segment of parentSegments) {
-            const parentPath = currentPath;
-            currentPath += (currentPath === '' ? '/' : '/') + segment;
-
-            if (!mockFileSystem[currentPath]) {
-                mockFileSystem[currentPath] = [];
+            // 既存ディレクトリの確認
+            const existingDir = await adapter.getItem(fullPath);
+            if (existingDir) {
+                throw new Error(`ディレクトリ "${dirPath}" は既に存在します`);
             }
 
-            if (parentPath !== '') {
-                const parentDirFiles = mockFileSystem[parentPath];
-                if (parentDirFiles && !parentDirFiles.some(f => f.name === segment && f.type === 'directory')) {
-                    parentDirFiles.push({
-                        name: segment,
-                        type: 'directory',
-                        size: ''
-                    });
-                }
-            }
+            // ディレクトリ作成
+            await adapter.createDirectory(fullPath);
+
+            return dirPath;
+        } catch (error) {
+            console.error('Failed to create directory:', error);
+            throw error;
         }
-
-        const targetDirectoryPath = currentPath;
-        
-        // Check if directory already exists
-        const existingDir = mockFileSystem[targetDirectoryPath]?.find(f => f.name === dirName && f.type === 'directory');
-        if (existingDir) {
-            throw new Error(`ディレクトリ "${dirName}" は既に存在します`);
-        }
-
-        // Create directory entry in parent
-        if (!mockFileSystem[targetDirectoryPath]) {
-            mockFileSystem[targetDirectoryPath] = [];
-        }
-
-        mockFileSystem[targetDirectoryPath].push({
-            name: dirName,
-            type: 'directory',
-            size: ''
-        });
-
-        // Create empty directory
-        const newDirPath = Helpers.joinPath(targetDirectoryPath, dirName);
-        mockFileSystem[newDirPath] = [];
-
-        return dirName;
     }
 
-    // ファイル・ディレクトリコピー
+    }
+
+    // ファイル・ディレクトリコピー（IndexedDB対応）
     static async copyFile(sourcePath, destPath) {
         await Helpers.delay(500);
 
-        const sourceFullPath = sourcePath.startsWith('/') ? sourcePath : Helpers.joinPath(AppState.currentPath, sourcePath);
-        const destFullPath = destPath.startsWith('/') ? destPath : Helpers.joinPath(AppState.currentPath, destPath);
+        try {
+            await storageManager.ensureInitialized();
+            const adapter = storageManager.getAdapter();
 
-        // Find source file
-        const sourceDir = sourceFullPath.substring(0, sourceFullPath.lastIndexOf('/')) || '/workspace';
-        const sourceFileName = sourceFullPath.substring(sourceFullPath.lastIndexOf('/') + 1);
-        
-        const sourceFiles = mockFileSystem[sourceDir] || [];
-        const sourceFile = sourceFiles.find(f => f.name === sourceFileName);
+            const sourceFullPath = sourcePath.startsWith('/') ? sourcePath : Helpers.joinPath(AppState.currentPath, sourcePath);
+            const destFullPath = destPath.startsWith('/') ? destPath : Helpers.joinPath(AppState.currentPath, destPath);
 
-        if (!sourceFile) {
-            throw new Error(`コピー元 "${sourcePath}" が見つかりません`);
-        }
-
-        // Determine destination
-        const destDir = destFullPath.substring(0, destFullPath.lastIndexOf('/')) || '/workspace';
-        const destFileName = destFullPath.substring(destFullPath.lastIndexOf('/') + 1);
-
-        // Ensure destination directory exists
-        if (!mockFileSystem[destDir]) {
-            throw new Error(`コピー先ディレクトリ "${destDir}" が存在しません`);
-        }
-
-        // Check if destination already exists
-        const destFiles = mockFileSystem[destDir];
-        const existingFile = destFiles.find(f => f.name === destFileName);
-        if (existingFile) {
-            throw new Error(`コピー先 "${destFileName}" は既に存在します`);
-        }
-
-        // Copy file
-        const copiedFile = {
-            name: destFileName,
-            type: sourceFile.type,
-            size: sourceFile.size,
-            content: sourceFile.content
-        };
-
-        destFiles.push(copiedFile);
-
-        // If copying directory, recursively copy contents
-        if (sourceFile.type === 'directory') {
-            const sourceDirPath = Helpers.joinPath(sourceDir, sourceFileName);
-            const destDirPath = Helpers.joinPath(destDir, destFileName);
-            mockFileSystem[destDirPath] = [];
-
-            const sourceDirFiles = mockFileSystem[sourceDirPath] || [];
-            for (const file of sourceDirFiles) {
-                await this.copyFile(
-                    Helpers.joinPath(sourceDirPath, file.name),
-                    Helpers.joinPath(destDirPath, file.name)
-                );
+            // コピー元の存在確認
+            const sourceItem = await adapter.getItem(sourceFullPath);
+            if (!sourceItem) {
+                throw new Error(`コピー元 "${sourcePath}" が見つかりません`);
             }
-        }
 
-        return destFileName;
+            // コピー先の重複確認
+            const destItem = await adapter.getItem(destFullPath);
+            if (destItem) {
+                throw new Error(`コピー先 "${destPath}" は既に存在します`);
+            }
+
+            // コピー実行
+            await adapter.copyItem(sourceFullPath, destFullPath);
+
+            return destPath;
+        } catch (error) {
+            console.error('Failed to copy file:', error);
+            throw error;
+        }
     }
 
-    // ファイル・ディレクトリ移動
+    // ファイル・ディレクトリ移動（IndexedDB対応）
     static async moveFile(sourcePath, destPath) {
         await Helpers.delay(500);
 
-        // First copy the file
-        const destFileName = await this.copyFile(sourcePath, destPath);
+        try {
+            await storageManager.ensureInitialized();
+            const adapter = storageManager.getAdapter();
 
-        // Then delete the source
-        await this.deleteFile(sourcePath);
+            const sourceFullPath = sourcePath.startsWith('/') ? sourcePath : Helpers.joinPath(AppState.currentPath, sourcePath);
+            const destFullPath = destPath.startsWith('/') ? destPath : Helpers.joinPath(AppState.currentPath, destPath);
 
-        return destFileName;
+            // 移動元の存在確認
+            const sourceItem = await adapter.getItem(sourceFullPath);
+            if (!sourceItem) {
+                throw new Error(`移動元 "${sourcePath}" が見つかりません`);
+            }
+
+            // 移動先の重複確認
+            const destItem = await adapter.getItem(destFullPath);
+            if (destItem) {
+                throw new Error(`移動先 "${destPath}" は既に存在します`);
+            }
+
+            // 移動実行
+            await adapter.moveItem(sourceFullPath, destFullPath);
+
+            return destPath;
+        } catch (error) {
+            console.error('Failed to move file:', error);
+            throw error;
+        }
     }
 
-    // ファイル・ディレクトリ削除
+    // ファイル・ディレクトリ削除（IndexedDB対応）
     static async deleteFile(filePath) {
         await Helpers.delay(500);
 
-        const fullPath = filePath.startsWith('/') ? filePath : Helpers.joinPath(AppState.currentPath, filePath);
-        const dir = fullPath.substring(0, fullPath.lastIndexOf('/')) || '/workspace';
-        const fileName = fullPath.substring(fullPath.lastIndexOf('/') + 1);
+        try {
+            await storageManager.ensureInitialized();
+            const adapter = storageManager.getAdapter();
 
-        const files = mockFileSystem[dir] || [];
-        const fileIndex = files.findIndex(f => f.name === fileName);
+            const fullPath = filePath.startsWith('/') ? filePath : Helpers.joinPath(AppState.currentPath, filePath);
 
-        if (fileIndex === -1) {
-            throw new Error(`ファイル "${fileName}" が見つかりません`);
+            // 削除対象の存在確認
+            const item = await adapter.getItem(fullPath);
+            if (!item) {
+                throw new Error(`ファイル "${filePath}" が見つかりません`);
+            }
+
+            // 削除実行
+            if (item.type === 'directory') {
+                await adapter.deleteDirectory(fullPath);
+            } else {
+                await adapter.deleteFile(fullPath);
+            }
+
+            return item.name;
+        } catch (error) {
+            console.error('Failed to delete file:', error);
+            throw error;
         }
-
-        const deletedFile = files[fileIndex];
-
-        // If deleting directory, remove its contents too
-        if (deletedFile.type === 'directory') {
-            const dirPath = Helpers.joinPath(dir, fileName);
-            delete mockFileSystem[dirPath];
-        }
-
-        files.splice(fileIndex, 1);
-        return deletedFile.name;
     }
 
     static formatFileSize(bytes) {
@@ -451,17 +393,17 @@ export class FileManagerController {
         elements.saveBtn.disabled = true;
         await Helpers.delay(500);
 
-        const textarea = elements.fileContent.querySelector('textarea');
-        if (textarea) {
-            const files = mockFileSystem[AppState.currentPath] || [];
-            const fileIndex = files.findIndex(f => f.name === AppState.currentEditingFile);
-            if (fileIndex !== -1) {
-                files[fileIndex].content = textarea.value;
-                
-                // ファイルサイズ更新
-                const sizeInBytes = new Blob([textarea.value]).size;
-                files[fileIndex].size = this.formatFileSize(sizeInBytes);
-                
+        try {
+            await storageManager.ensureInitialized();
+            const adapter = storageManager.getAdapter();
+
+            const textarea = elements.fileContent.querySelector('textarea');
+            if (textarea) {
+                const filePath = Helpers.joinPath(AppState.currentPath, AppState.currentEditingFile);
+
+                // ファイル更新（上書き）
+                await adapter.createFile(filePath, textarea.value);
+
                 if (window.MessageProcessor) {
                     window.MessageProcessor.addMessage('system', `💾 ファイル "${AppState.currentEditingFile}" を保存しました`);
                 }
@@ -475,6 +417,11 @@ export class FileManagerController {
                 if (!AppState.isEditMode) {
                     FileViewController.showFileContent(textarea.value, AppState.currentEditingFile);
                 }
+            }
+        } catch (error) {
+            console.error('Failed to save file:', error);
+            if (window.MessageProcessor) {
+                window.MessageProcessor.addMessage('system', `⚠️ ファイルの保存に失敗しました: ${error.message}`);
             }
         }
 
