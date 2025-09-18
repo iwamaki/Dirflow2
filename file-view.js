@@ -14,11 +14,11 @@
 - UI要素の表示状態の調整
 */
 
-import { elements } from '../core/config.js';
-import { AppState } from '../core/state.js';
-import { MarkdownUtils } from '../utils/markdown.js';
-import { DOMHelpers } from '../utils/dom-helpers.js';
-import { NavigationController } from './navigation.js';
+import { elements } from './public/src/core/config.js';
+import { AppState } from './public/src/core/state.js';
+import { MarkdownUtils } from './public/src/utils/markdown.js';
+import { DOMHelpers } from './public/src/utils/dom-helpers.js';
+import { NavigationController } from './public/src/ui/navigation.js';
 
 export class FileViewController {
     static setFileViewMode(enabled) {

@@ -19,7 +19,7 @@ import { AppState, ConversationHistory, SystemPromptManager } from '../core/stat
 import { MarkdownUtils } from '../utils/markdown.js';
 import { APIClient } from './client.js';
 import { FileManagerController } from '../file-system/file-manager.js';
-import { DiffViewer } from '../file-system/diff-viewer.js';
+import { FileEditor } from '../file-system/file-editor.js';
 
  
 /* メッセージ処理クラス
@@ -334,7 +334,7 @@ export class MessageProcessor {
         
         // 現在編集中のファイルの場合、差分表示モードに切り替え
         if (fileName === AppState.currentEditingFile && AppState.isFileViewMode) {
-            DiffViewer.setDiffMode(true, oldContent, content);
+            FileEditor.switchToDiffMode();
             this.addMessage('system', '📊 AIによる編集が完了しました。変更内容を確認してください');
         }
         

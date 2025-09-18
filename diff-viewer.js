@@ -18,7 +18,7 @@ import { elements, mockFileSystem } from '../core/config.js';
 import { AppState } from '../core/state.js';
 import { DOMHelpers } from '../utils/dom-helpers.js';
 import { NavigationController } from '../ui/navigation.js';
-import { FileViewController } from '../ui/file-view.js';
+import { FileViewController } from '../../../file-view.js';
 import { FileManagerController } from './file-manager.js';
 
 // 差分管理クラス

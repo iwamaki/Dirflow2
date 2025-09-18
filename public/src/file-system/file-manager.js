@@ -17,7 +17,7 @@
 import { elements, storageManager } from '../core/config.js';
 import { AppState } from '../core/state.js';
 import { Helpers } from '../utils/helpers.js';
-import { FileViewController } from '../ui/file-view.js';
+import { FileEditor } from './file-editor.js';
 import { NavigationController } from '../ui/navigation.js';
 
 export class FileManagerController {
@@ -177,8 +177,7 @@ export class FileManagerController {
                 isEditMode: false
             });
 
-            FileViewController.setFileViewMode(true);
-            FileViewController.showFileContent(content, filename);
+            FileEditor.openFile(filename, content);
 
             if (window.MessageProcessor) {
                 window.MessageProcessor.addMessage('system', `📖 "${filename}" を開きました。`);
@@ -361,6 +360,28 @@ export class FileManagerController {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
     }
 
+    // FileEditor用のファイル保存メソッド
+    static async saveFileContent(filename, content) {
+        if (!filename) throw new Error('ファイル名が指定されていません');
+
+        await Helpers.delay(500);
+
+        try {
+            await storageManager.ensureInitialized();
+            const adapter = storageManager.getAdapter();
+
+            const filePath = Helpers.joinPath(AppState.currentPath, filename);
+
+            // ファイル更新（上書き）
+            await adapter.createFile(filePath, content);
+
+            return true;
+        } catch (error) {
+            console.error('Failed to save file content:', error);
+            throw error;
+        }
+    }
+
     static async saveFile() {
         if (!AppState.currentEditingFile) return;
 
@@ -386,10 +407,12 @@ export class FileManagerController {
                     isContentModified: false,
                     originalContent: textarea.value
                 });
-                NavigationController.updateSaveButtonState();
+                if (window.FileEditor) {
+                    window.FileEditor.updateSaveButtonState();
+                }
 
                 if (!AppState.isEditMode) {
-                    FileViewController.showFileContent(textarea.value, AppState.currentEditingFile);
+                    FileEditor.showFileContent(textarea.value, AppState.currentEditingFile);
                 }
             }
         } catch (error) {

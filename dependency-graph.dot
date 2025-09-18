@@ -8,7 +8,7 @@ strict digraph "dependency-cruiser output"{
     subgraph "cluster_public" {label="public" subgraph "cluster_public/src" {label="src" subgraph "cluster_public/src/api" {label="api" "public/src/api/message-processor.js" [label=<message-processor.js> tooltip="message-processor.js" URL="public/src/api/message-processor.js" ] } } }
     "public/src/api/message-processor.js" -> "public/src/core/config.js"
     "public/src/api/message-processor.js" -> "public/src/core/state.js"
-    "public/src/api/message-processor.js" -> "public/src/file-system/diff-viewer.js"
+    "public/src/api/message-processor.js" -> "public/src/file-system/file-editor.js"
     "public/src/api/message-processor.js" -> "public/src/file-system/file-manager.js"
     "public/src/api/message-processor.js" -> "public/src/utils/markdown.js"
     "public/src/api/message-processor.js" -> "public/src/api/client.js"
@@ -18,34 +18,38 @@ strict digraph "dependency-cruiser output"{
     "public/src/core/app.js" -> "public/src/events/event-handlers.js"
     "public/src/core/app.js" -> "public/src/file-system/file-manager.js"
     "public/src/core/app.js" -> "public/src/ui/navigation.js"
+    "public/src/core/app.js" -> "public/src/core/config.js"
     "public/src/core/app.js" -> "public/src/core/state.js"
     subgraph "cluster_public" {label="public" subgraph "cluster_public/src" {label="src" subgraph "cluster_public/src/core" {label="core" "public/src/core/config.js" [label=<config.js> tooltip="config.js" URL="public/src/core/config.js" ] } } }
+    "public/src/core/config.js" -> "public/src/storage/storage-adapter.js"
     subgraph "cluster_public" {label="public" subgraph "cluster_public/src" {label="src" subgraph "cluster_public/src/core" {label="core" "public/src/core/state.js" [label=<state.js> tooltip="state.js" URL="public/src/core/state.js" ] } } }
     "public/src/core/state.js" -> "public/src/prompts/prompt-manager.js" [xlabel="no-circular" tooltip="no-circular" arrowhead="normalnoneodot" fontcolor="orange" color="orange"]
     subgraph "cluster_public" {label="public" subgraph "cluster_public/src" {label="src" subgraph "cluster_public/src/events" {label="events" "public/src/events/event-handlers.js" [label=<event-handlers.js> tooltip="event-handlers.js" URL="public/src/events/event-handlers.js" ] } } }
     "public/src/events/event-handlers.js" -> "public/src/api/message-processor.js"
     "public/src/events/event-handlers.js" -> "public/src/core/config.js"
     "public/src/events/event-handlers.js" -> "public/src/core/state.js"
-    "public/src/events/event-handlers.js" -> "public/src/file-system/diff-viewer.js"
+    "public/src/events/event-handlers.js" -> "public/src/file-system/file-editor.js"
     "public/src/events/event-handlers.js" -> "public/src/file-system/file-manager.js"
     "public/src/events/event-handlers.js" -> "public/src/prompts/prompt-ui.js"
-    "public/src/events/event-handlers.js" -> "public/src/ui/file-view.js"
     "public/src/events/event-handlers.js" -> "public/src/ui/modals.js"
     "public/src/events/event-handlers.js" -> "public/src/ui/navigation.js"
     "public/src/events/event-handlers.js" -> "public/src/utils/helpers.js"
-    subgraph "cluster_public" {label="public" subgraph "cluster_public/src" {label="src" subgraph "cluster_public/src/file-system" {label="file-system" "public/src/file-system/diff-viewer.js" [label=<diff-viewer.js> tooltip="diff-viewer.js" URL="public/src/file-system/diff-viewer.js" ] } } }
-    "public/src/file-system/diff-viewer.js" -> "public/src/core/config.js"
-    "public/src/file-system/diff-viewer.js" -> "public/src/core/state.js"
-    "public/src/file-system/diff-viewer.js" -> "public/src/ui/file-view.js"
-    "public/src/file-system/diff-viewer.js" -> "public/src/ui/navigation.js"
-    "public/src/file-system/diff-viewer.js" -> "public/src/utils/dom-helpers.js"
-    "public/src/file-system/diff-viewer.js" -> "public/src/file-system/file-manager.js"
+    subgraph "cluster_public" {label="public" subgraph "cluster_public/src" {label="src" subgraph "cluster_public/src/file-system" {label="file-system" "public/src/file-system/file-editor.js" [label=<file-editor.js> tooltip="file-editor.js" URL="public/src/file-system/file-editor.js" ] } } }
+    "public/src/file-system/file-editor.js" -> "public/src/core/config.js"
+    "public/src/file-system/file-editor.js" -> "public/src/core/state.js"
+    "public/src/file-system/file-editor.js" -> "public/src/ui/navigation.js"
+    "public/src/file-system/file-editor.js" -> "public/src/utils/dom-helpers.js"
+    "public/src/file-system/file-editor.js" -> "public/src/utils/markdown.js"
+    "public/src/file-system/file-editor.js" -> "public/src/file-system/file-manager.js" [xlabel="no-circular" tooltip="no-circular" arrowhead="normalnoneodot" fontcolor="orange" color="orange"]
     subgraph "cluster_public" {label="public" subgraph "cluster_public/src" {label="src" subgraph "cluster_public/src/file-system" {label="file-system" "public/src/file-system/file-manager.js" [label=<file-manager.js> tooltip="file-manager.js" URL="public/src/file-system/file-manager.js" ] } } }
     "public/src/file-system/file-manager.js" -> "public/src/core/config.js"
     "public/src/file-system/file-manager.js" -> "public/src/core/state.js"
-    "public/src/file-system/file-manager.js" -> "public/src/ui/file-view.js"
     "public/src/file-system/file-manager.js" -> "public/src/ui/navigation.js"
     "public/src/file-system/file-manager.js" -> "public/src/utils/helpers.js"
+    "public/src/file-system/file-manager.js" -> "public/src/file-system/file-editor.js" [xlabel="no-circular" tooltip="no-circular" arrowhead="normalnoneodot" fontcolor="orange" color="orange"]
+    subgraph "cluster_public" {label="public" subgraph "cluster_public/src" {label="src" subgraph "cluster_public/src/migration" {label="migration" "public/src/migration/data-migrator.js" [label=<data-migrator.js> tooltip="data-migrator.js" URL="public/src/migration/data-migrator.js" ] } } }
+    "public/src/migration/data-migrator.js" -> "public/src/api/message-processor.js"
+    "public/src/migration/data-migrator.js" -> "public/src/core/config.js"
     subgraph "cluster_public" {label="public" subgraph "cluster_public/src" {label="src" subgraph "cluster_public/src/prompts" {label="prompts" "public/src/prompts/prompt-manager.js" [label=<prompt-manager.js> tooltip="prompt-manager.js" URL="public/src/prompts/prompt-manager.js" ] } } }
     "public/src/prompts/prompt-manager.js" -> "public/src/core/state.js" [xlabel="no-circular" tooltip="no-circular" arrowhead="normalnoneodot" fontcolor="orange" color="orange"]
     subgraph "cluster_public" {label="public" subgraph "cluster_public/src" {label="src" subgraph "cluster_public/src/prompts" {label="prompts" "public/src/prompts/prompt-ui.js" [label=<prompt-ui.js> tooltip="prompt-ui.js" URL="public/src/prompts/prompt-ui.js" ] } } }
@@ -53,12 +57,7 @@ strict digraph "dependency-cruiser output"{
     "public/src/prompts/prompt-ui.js" -> "public/src/core/state.js"
     "public/src/prompts/prompt-ui.js" -> "public/src/utils/dom-helpers.js"
     "public/src/prompts/prompt-ui.js" -> "public/src/prompts/prompt-manager.js"
-    subgraph "cluster_public" {label="public" subgraph "cluster_public/src" {label="src" subgraph "cluster_public/src/ui" {label="ui" "public/src/ui/file-view.js" [label=<file-view.js> tooltip="file-view.js" URL="public/src/ui/file-view.js" ] } } }
-    "public/src/ui/file-view.js" -> "public/src/core/config.js"
-    "public/src/ui/file-view.js" -> "public/src/core/state.js"
-    "public/src/ui/file-view.js" -> "public/src/utils/dom-helpers.js"
-    "public/src/ui/file-view.js" -> "public/src/utils/markdown.js"
-    "public/src/ui/file-view.js" -> "public/src/ui/navigation.js"
+    subgraph "cluster_public" {label="public" subgraph "cluster_public/src" {label="src" subgraph "cluster_public/src/storage" {label="storage" "public/src/storage/storage-adapter.js" [label=<storage-adapter.js> tooltip="storage-adapter.js" URL="public/src/storage/storage-adapter.js" ] } } }
     subgraph "cluster_public" {label="public" subgraph "cluster_public/src" {label="src" subgraph "cluster_public/src/ui" {label="ui" "public/src/ui/modals.js" [label=<modals.js> tooltip="modals.js" URL="public/src/ui/modals.js" ] } } }
     "public/src/ui/modals.js" -> "public/src/ui/navigation.js"
     subgraph "cluster_public" {label="public" subgraph "cluster_public/src" {label="src" subgraph "cluster_public/src/ui" {label="ui" "public/src/ui/navigation.js" [label=<navigation.js> tooltip="navigation.js" URL="public/src/ui/navigation.js" ] } } }

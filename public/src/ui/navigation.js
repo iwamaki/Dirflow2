@@ -54,12 +54,6 @@ export class NavigationController {
         }
     }
 
-    static updateSaveButtonState() {
-        const isModified = AppState.isContentModified;
-        elements.saveBtn.classList.toggle('active', isModified);
-        elements.saveBtn.title = isModified ? '変更を保存' : '変更なし';
-    }
-
     // 選択モード設定（複数選択対応）
     static setSelectionMode(enabled, multiSelect = false) {
         AppState.setState({

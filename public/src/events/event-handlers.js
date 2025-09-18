@@ -18,9 +18,8 @@ import { AppState, SystemPromptManager } from '../core/state.js';
 import { Helpers } from '../utils/helpers.js';
 import { NavigationController } from '../ui/navigation.js';
 import { ModalController } from '../ui/modals.js';
-import { FileViewController } from '../ui/file-view.js';
+import { FileEditor } from '../file-system/file-editor.js';
 import { FileManagerController } from '../file-system/file-manager.js';
-import { DiffViewer } from '../file-system/diff-viewer.js';
 import { MessageProcessor } from '../api/message-processor.js';
 import { PromptUIController } from '../prompts/prompt-ui.js';
 
@@ -28,7 +27,7 @@ import { PromptUIController } from '../prompts/prompt-ui.js';
 export class EventHandlers {
     static init() {
         // ヘッダーボタン
-        elements.backBtn.addEventListener('click', () => FileViewController.setFileViewMode(false));
+        elements.backBtn.addEventListener('click', () => FileEditor.setFileViewMode(false));
         elements.editBtn.addEventListener('click', this.toggleEditMode);
         elements.saveBtn.addEventListener('click', this.handleSaveClick);
         elements.settingsBtn.addEventListener('click', () => ModalController.showModal('settingsModal'));
@@ -114,21 +113,8 @@ export class EventHandlers {
 
     // 保存ボタンクリック処理
     static handleSaveClick() {
-        if (!AppState.isContentModified) {
-            MessageProcessor.addMessage('system', '💡 変更点はありません。');
-            return;
-        }
-
-        const textarea = elements.fileContent.querySelector('textarea');
-        if (textarea && AppState.originalContent !== null) {
-            const currentContent = textarea.value;
-            // 変更があった場合は差分表示モードに切り替え
-            DiffViewer.setDiffMode(true, AppState.originalContent, currentContent);
-            MessageProcessor.addMessage('system', '📊 保存する内容の差分を確認してください');
-        } else {
-            // 差分表示が不要な場合（またはエラー）は直接保存
-            FileManagerController.saveFile();
-        }
+        console.log('Save button clicked');
+        FileEditor.saveFile();
     }
 
     // 編集中の内容を一時保持する変数（シンプルなアプローチ）
@@ -138,49 +124,20 @@ export class EventHandlers {
     static toggleEditMode() {
         // 差分モードの場合は編集モードに戻る
         if (AppState.isDiffMode) {
-            DiffViewer.setDiffMode(false);
-            AppState.setState({ isEditMode: true });
-            const contentToShow = EventHandlers.currentEditingContent || EventHandlers.getOriginalFileContent();
-            FileViewController.showFileContent(contentToShow, AppState.currentEditingFile);
+            FileEditor.switchToEditMode();
             MessageProcessor.addMessage('system', '✏️ 編集モードに戻りました');
             return;
         }
 
         const newEditMode = !AppState.isEditMode;
-        
-        // 編集モードに入る際にオリジナルコンテンツを保存
-        if (!AppState.isEditMode && newEditMode) {
-            const files = mockFileSystem[AppState.currentPath] || [];
-            const file = files.find(f => f.name === AppState.currentEditingFile);
-            if (file) {
-                AppState.setState({ 
-                    originalContent: file.content,
-                    isContentModified: false
-                });
-                NavigationController.updateSaveButtonState();
-            }
-        }
 
-        // 表示する内容を決定
-        let contentToShow;
         if (newEditMode) {
-            // 編集モードに切り替え：保存された編集内容があればそれを、なければオリジナルを表示
-            contentToShow = EventHandlers.currentEditingContent || EventHandlers.getOriginalFileContent();
+            FileEditor.switchToEditMode();
+            MessageProcessor.addMessage('system', '✏️ 編集モードに切り替えました');
         } else {
-            // プレビューモードに切り替え：今textareaにある内容をそのまま表示
-            const textarea = elements.fileContent.querySelector('textarea');
-            if (textarea) {
-                contentToShow = textarea.value;
-                // 編集内容を一時保持（編集モードに戻る時のため）
-                EventHandlers.currentEditingContent = textarea.value;
-            } else {
-                contentToShow = EventHandlers.currentEditingContent || EventHandlers.getOriginalFileContent();
-            }
+            FileEditor.switchToPreviewMode();
+            MessageProcessor.addMessage('system', '👁️ プレビューモードに切り替えました');
         }
-
-        AppState.setState({ isEditMode: newEditMode });
-        FileViewController.showFileContent(contentToShow, AppState.currentEditingFile);
-        MessageProcessor.addMessage('system', newEditMode ? '✏️ 編集モードに切り替えました' : '📖 プレビューモードに切り替えました');
     }
 
     // オリジナルファイル内容を取得
