@@ -43,8 +43,9 @@ export class EventHandlers {
         elements.chatCloseBtn?.addEventListener('click', () => NavigationController.toggleChat());
 
         // FAB メニュー
-        elements.fabBtn?.addEventListener('click', () => NavigationController.toggleFab());
-        elements.fabOverlay?.addEventListener('click', () => NavigationController.setFabOpen(false));
+        elements.fabBtn.addEventListener('click', this.toggleFabMenu);
+        elements.fabMenuOverlay.addEventListener('click', this.toggleFabMenu);
+        elements.fabMenu.addEventListener('click', this.handleFabMenuClick);
 
         // FAB アクション
         elements.fabNewFile?.addEventListener('click', () => ModalController.showModal('fileModal'));
@@ -74,18 +75,61 @@ export class EventHandlers {
         console.log('🧹 Event handlers cleanup');
     }
 
+   // FABメニューの開閉制御
+    static toggleFabMenu() {
+        const isMenuOpen = AppState.isFabMenuOpen || false;
+        AppState.setState({ isFabMenuOpen: !isMenuOpen });
+        
+        elements.fabBtn.textContent = !isMenuOpen ? '×' : '+';
+        elements.fabMenu.classList.toggle('show', !isMenuOpen);
+        elements.fabMenuOverlay.classList.toggle('show', !isMenuOpen);
+    }
+
+    // FABメニュー項目クリック処理
+    static handleFabMenuClick(e) {
+        const menuItem = e.target.closest('.fab-menu-item');
+        if (!menuItem) return;
+
+        const action = menuItem.dataset.action;
+        switch (action) {
+            case 'create':
+                ModalController.showModal('createModal');
+                break;
+            case 'import':
+                ModalController.showModal('importModal');
+                break;
+            case 'system-prompt':
+                ModalController.showModal('systemPromptModal');
+                break;
+        }
+        EventHandlers.toggleFabMenu(); // メニューを閉じる
+    }
+
+
     // 編集モード切り替え
     static toggleEditMode() {
-        if (window.FileEditor && window.FileEditor.toggleEditMode) {
-            window.FileEditor.toggleEditMode();
+        // 差分モードの場合は編集モードに戻る
+        if (AppState.isDiffMode) {
+            FileEditor.switchToEditMode();
+            MessageProcessor.addMessage('system', '✏️ 編集モードに戻りました');
+            return;
+        }
+
+        const newEditMode = !AppState.isEditMode;
+
+        if (newEditMode) {
+            FileEditor.switchToEditMode();
+            MessageProcessor.addMessage('system', '✏️ 編集モードに切り替えました');
+        } else {
+            FileEditor.switchToPreviewMode();
+            MessageProcessor.addMessage('system', '👁️ プレビューモードに切り替えました');
         }
     }
 
-    // 保存処理
-    static async handleSaveClick() {
-        if (AppState.currentEditingFile) {
-            await FileManagerController.saveFile();
-        }
+    // 保存ボタンクリック処理
+    static handleSaveClick() {
+        console.log('Save button clicked');
+        FileEditor.saveFile();
     }
 
     // キーボードイベント処理

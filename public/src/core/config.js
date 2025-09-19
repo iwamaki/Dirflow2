@@ -210,37 +210,78 @@ export class StorageManager {
 
 // DOM要素への参照
 export const elements = {
-    // メインUI要素
-    fileList: document.getElementById('file-list'),
-    fileView: document.getElementById('file-view'),
-    fileContent: document.getElementById('file-content'),
-    currentPath: document.getElementById('current-path'),
-    chatInput: document.getElementById('chat-input'),
-    sendBtn: document.getElementById('send-btn'),
-    chatMessages: document.getElementById('chat-messages'),
-    
+    // ヘッダー
+    backBtn: document.getElementById('backBtn'),
+    saveBtn: document.getElementById('saveBtn'),
+    editBtn: document.getElementById('editBtn'),
+    settingsBtn: document.getElementById('settingsBtn'),
+    currentPath: document.getElementById('currentPath'),
+    selectionInfo: document.getElementById('selectionInfo'),
+    selectionCount: document.getElementById('selectionCount'),
+
+    // メインコンテンツ
+    fileListContainer: document.getElementById('fileListContainer'),
+    fileList: document.getElementById('fileList'),
+    fileView: document.getElementById('fileView'),
+    fileContent: document.getElementById('fileContent'),
+
+    // チャット・インタラクション
+    chatContainer: document.getElementById('chatContainer'),
+    actionContainer: document.getElementById('actionContainer'),
+    chatInput: document.getElementById('chatInput'),
+    sendBtn: document.getElementById('sendBtn'),
+    cancelBtn: document.getElementById('cancelBtn'),
+    chatMessages: document.getElementById('chatMessages'),
+    chatOverlay: document.getElementById('chatOverlay'),
+    chatCloseBtn: document.getElementById('chatCloseBtn'),
+
     // ボタン類
-    editBtn: document.getElementById('edit-btn'),
-    saveBtn: document.getElementById('save-btn'),
-    previewBtn: document.getElementById('preview-btn'),
-    
-    // モーダル要素
-    settingsModal: document.getElementById('settings-modal'),
-    fileModal: document.getElementById('file-modal'),
-    renameModal: document.getElementById('rename-modal'),
-    importModal: document.getElementById('import-modal'),
-    
+    previewBtn: document.getElementById('previewBtn'),
+
     // FAB関連
-    fabMenu: document.getElementById('fab-menu'),
-    fabOverlay: document.getElementById('fab-overlay'),
-    
-    // その他
-    loadingOverlay: document.getElementById('loading-overlay'),
-    selectionCount: document.getElementById('selection-count'),
-    
-    // プロンプト管理
-    promptDrawer: document.getElementById('prompt-drawer'),
-    promptOverlay: document.getElementById('prompt-overlay')
+    fabBtn: document.getElementById('fabBtn'),
+    fabMenu: document.getElementById('fabMenu'),
+    fabMenuOverlay: document.getElementById('fabMenuOverlay'),
+
+    // モーダル
+    settingsModal: document.getElementById('settingsModal'),
+    createModal: document.getElementById('createModal'),
+    renameModal: document.getElementById('renameModal'),
+    importModal: document.getElementById('importModal'),
+    systemPromptModal: document.getElementById('systemPromptModal'),
+
+    // フォーム入力
+    filePathInput: document.getElementById('filePathInput'),
+    fileContentInput: document.getElementById('fileContentInput'),
+    renameInput: document.getElementById('renameInput'),
+    createFileBtn: document.getElementById('createFileBtn'),
+    renameFileBtn: document.getElementById('renameFileBtn'),
+
+    // インポート関連
+    fileImportInput: document.getElementById('fileImportInput'),
+    importPathInput: document.getElementById('importPathInput'),
+    confirmImport: document.getElementById('confirmImport'),
+
+    // システムプロンプト関連
+    promptNameInput: document.getElementById('promptNameInput'),
+    promptContentInput: document.getElementById('promptContentInput'),
+    promptDescriptionInput: document.getElementById('promptDescriptionInput'),
+    confirmSystemPrompt: document.getElementById('confirmSystemPrompt'),
+
+    // システムプロンプト管理
+    promptMenuBtn: document.getElementById('promptMenuBtn'),
+    promptDrawer: document.getElementById('promptDrawer'),
+    drawerOverlay: document.getElementById('drawerOverlay'),
+    drawerCloseBtn: document.getElementById('drawerCloseBtn'),
+    createSection: document.getElementById('createSection'),
+    manageSection: document.getElementById('manageSection'),
+    workflowSection: document.getElementById('workflowSection'),
+    currentPromptStatus: document.getElementById('currentPromptStatus'),
+    promptList: document.getElementById('promptList'),
+
+    // その他のUI
+    loadingOverlay: document.getElementById('loadingOverlay'),
+    promptOverlay: document.getElementById('promptOverlay')
 };
 
 // ストレージマネージャーのシングルトンインスタンス
