@@ -1,29 +1,29 @@
 /* =========================================
-    データ移行ユーティリティ
+    データ移行・エクスポート管理 (完全移行版)
    ========================================= */
 
 /*
 ## 概要
-アプリケーションのデータ移行とリカバリ機能を提供するモジュール。
+IndexedDBデータのエクスポート・インポート機能を提供するモジュール（完全移行版）。
+mockFileSystemからの移行機能を削除し、JSON形式でのデータバックアップ・復元に特化。
 
 ## 責任
-- 既存データ（mockFileSystem）からIndexedDBへの移行
-- データのエクスポートとインポート
-- ストレージ情報の取得とIndexedDBのクリア
-- 移行状況の管理と進捗表示
+- IndexedDBからJSONへのエクスポート
+- JSONからIndexedDBへのインポート
+- データのバックアップとリストア
+- 移行進捗の管理とUI表示
+- エラーハンドリング
 */
 
-import { storageManager } from '../core/config.js';
 import { MessageProcessor } from '../api/message-processor.js';
+import { storageManager } from '../core/config.js';
 
 export class DataMigrator {
     constructor() {
         this.migrationInProgress = false;
         this.migrationStatus = {
-            started: false,
+            inProgress: false,
             completed: false,
-            totalFiles: 0,
-            migratedFiles: 0,
             errors: [],
             startTime: null,
             endTime: null
@@ -31,49 +31,17 @@ export class DataMigrator {
     }
 
     /**
-     * アプリケーション起動時の自動移行チェック
+     * IndexedDBからJSONファイルへのエクスポート
      */
-    async checkAndMigrate() {
-        try {
-            await storageManager.ensureInitialized();
-            const storageMode = storageManager.getStorageMode();
-
-            if (storageMode === 'indexeddb') {
-                const stats = await storageManager.storageAdapter.getStorageStats();
-
-                // IndexedDBが空で、移行可能なデータがある場合
-                if (stats.totalFiles === 0) {
-                    console.log('🔄 Empty IndexedDB detected, checking for migration...');
-                    await this.performMigration();
-                    return true;
-                } else {
-                    console.log(`✅ IndexedDB contains ${stats.totalFiles} files, migration not needed`);
-                    return false;
-                }
-            } else {
-                console.log('⚠️ Running in memory mode, migration not applicable');
-                return false;
-            }
-        } catch (error) {
-            console.error('Migration check failed:', error);
-            return false;
-        }
-    }
-
-    /**
-     * 手動でのデータ移行実行
-     */
-    async performMigration(showProgress = true) {
+    async exportToJSON(showProgress = true) {
         if (this.migrationInProgress) {
-            throw new Error('Migration is already in progress');
+            throw new Error('エクスポート処理が既に実行中です');
         }
 
         this.migrationInProgress = true;
         this.migrationStatus = {
-            started: true,
+            inProgress: true,
             completed: false,
-            totalFiles: 0,
-            migratedFiles: 0,
             errors: [],
             startTime: new Date(),
             endTime: null
@@ -81,21 +49,152 @@ export class DataMigrator {
 
         try {
             if (showProgress) {
-                MessageProcessor.addMessage('system', '🔄 データ移行を開始します...');
+                MessageProcessor.addMessage('system', '📤 データエクスポートを開始しています...');
             }
 
             await storageManager.ensureInitialized();
-            const result = await storageManager.checkAndMigrate();
+
+            if (storageManager.getStorageMode() !== 'indexeddb') {
+                throw new Error('IndexedDBモードが必要です');
+            }
+
+            // ストレージ統計情報取得
+            const stats = await storageManager.storageAdapter.getStorageStats();
+            
+            if (stats.totalFiles === 0) {
+                if (showProgress) {
+                    MessageProcessor.addMessage('system', '⚠️ エクスポートするデータがありません');
+                }
+                return { success: true, exportedCount: 0 };
+            }
+
+            // データエクスポート
+            const data = await storageManager.storageAdapter.exportToMockFileSystem();
+            
+            // JSONファイルとしてダウンロード
+            const timestamp = new Date().toISOString().split('T')[0];
+            const filename = `ai-file-manager-backup-${timestamp}.json`;
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
 
             this.migrationStatus.completed = true;
             this.migrationStatus.endTime = new Date();
 
             if (showProgress) {
                 const duration = this.migrationStatus.endTime - this.migrationStatus.startTime;
-                MessageProcessor.addMessage('system', `✅ データ移行が完了しました（${duration}ms）`);
+                MessageProcessor.addMessage('system', 
+                    `✅ データエクスポートが完了しました\n` +
+                    `📊 ${stats.totalFiles} ファイル、${stats.totalDirectories} フォルダ\n` +
+                    `💾 ファイル名: ${filename}\n` +
+                    `⏱️ 処理時間: ${duration}ms`
+                );
             }
 
-            console.log('✅ Migration completed successfully');
+            console.log('✅ Data export completed successfully');
+            return { success: true, exportedCount: stats.totalFiles, filename };
+
+        } catch (error) {
+            this.migrationStatus.errors.push(error.message);
+            this.migrationStatus.endTime = new Date();
+
+            if (showProgress) {
+                MessageProcessor.addMessage('system', `❌ データエクスポートに失敗しました: ${error.message}`);
+            }
+
+            console.error('Data export failed:', error);
+            throw error;
+
+        } finally {
+            this.migrationInProgress = false;
+            this.migrationStatus.inProgress = false;
+        }
+    }
+
+    /**
+     * JSONファイルからIndexedDBへのインポート
+     */
+    async importFromJSON(jsonData, showProgress = true) {
+        if (this.migrationInProgress) {
+            throw new Error('インポート処理が既に実行中です');
+        }
+
+        this.migrationInProgress = true;
+        this.migrationStatus = {
+            inProgress: true,
+            completed: false,
+            errors: [],
+            startTime: new Date(),
+            endTime: null
+        };
+
+        try {
+            if (showProgress) {
+                MessageProcessor.addMessage('system', '📥 データインポートを開始しています...');
+            }
+
+            await storageManager.ensureInitialized();
+
+            if (storageManager.getStorageMode() !== 'indexeddb') {
+                throw new Error('IndexedDBモードが必要です');
+            }
+
+            // データ形式の検証
+            if (!jsonData || typeof jsonData !== 'object') {
+                throw new Error('無効なJSONデータ形式です');
+            }
+
+            const fileCount = Object.keys(jsonData).length;
+            if (fileCount === 0) {
+                if (showProgress) {
+                    MessageProcessor.addMessage('system', '⚠️ インポートするデータがありません');
+                }
+                return { success: true, importedCount: 0 };
+            }
+
+            // 既存データのバックアップ確認
+            const existingStats = await storageManager.storageAdapter.getStorageStats();
+            if (existingStats.totalFiles > 0) {
+                const confirmed = confirm(
+                    `既存のデータ（${existingStats.totalFiles}ファイル）を削除してインポートしますか？\n` +
+                    `この操作は取り消せません。`
+                );
+                
+                if (!confirmed) {
+                    throw new Error('ユーザーによりキャンセルされました');
+                }
+            }
+
+            // インポート実行
+            const result = await storageManager.storageAdapter.importFromJSON(jsonData);
+
+            this.migrationStatus.completed = true;
+            this.migrationStatus.endTime = new Date();
+
+            if (showProgress) {
+                const duration = this.migrationStatus.endTime - this.migrationStatus.startTime;
+                MessageProcessor.addMessage('system', 
+                    `✅ データインポートが完了しました\n` +
+                    `📊 ${result.importedCount} ファイルをインポート\n` +
+                    `⏱️ 処理時間: ${duration}ms`
+                );
+            }
+
+            // ファイルリストの更新
+            if (window.FileManagerController) {
+                await window.FileManagerController.loadFileList();
+            }
+
+            console.log('✅ Data import completed successfully');
             return result;
 
         } catch (error) {
@@ -103,92 +202,135 @@ export class DataMigrator {
             this.migrationStatus.endTime = new Date();
 
             if (showProgress) {
-                MessageProcessor.addMessage('system', `❌ データ移行中にエラーが発生しました: ${error.message}`);
+                MessageProcessor.addMessage('system', `❌ データインポートに失敗しました: ${error.message}`);
             }
 
-            console.error('Migration failed:', error);
+            console.error('Data import failed:', error);
             throw error;
 
         } finally {
             this.migrationInProgress = false;
+            this.migrationStatus.inProgress = false;
         }
     }
 
     /**
-     * IndexedDBからメモリへのエクスポート（バックアップ目的）
+     * ファイル選択によるインポート
      */
-    async exportToMemory() {
-        try {
-            await storageManager.ensureInitialized();
+    async importFromFile(showProgress = true) {
+        return new Promise((resolve, reject) => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
 
-            if (storageManager.getStorageMode() !== 'indexeddb') {
-                throw new Error('IndexedDB mode required for export');
+            input.onchange = async (event) => {
+                const file = event.target.files[0];
+                if (!file) {
+                    reject(new Error('ファイルが選択されていません'));
+                    return;
+                }
+
+                if (!file.name.endsWith('.json')) {
+                    reject(new Error('JSONファイルを選択してください'));
+                    return;
+                }
+
+                try {
+                    const text = await file.text();
+                    const jsonData = JSON.parse(text);
+                    const result = await this.importFromJSON(jsonData, showProgress);
+                    resolve(result);
+                } catch (error) {
+                    reject(new Error(`ファイル読み込みに失敗しました: ${error.message}`));
+                }
+            };
+
+            input.click();
+        });
+    }
+
+    /**
+     * レガシーデータの自動移行（既存ユーザー向け）
+     */
+    async migrateLegacyData(showProgress = true) {
+        // 旧バージョンのIndexedDBからの移行
+        try {
+            if (showProgress) {
+                MessageProcessor.addMessage('system', '🔄 レガシーデータの移行チェック中...');
             }
 
-            const data = await storageManager.storageAdapter.exportToMockFileSystem();
-            const dataStr = JSON.stringify(data, null, 2);
-
-            console.log('📤 Data exported from IndexedDB:', data);
-
-            // ダウンロードリンクを作成
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `file-manager-backup-${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            MessageProcessor.addMessage('system', '📤 データがJSONファイルとしてエクスポートされました');
-            return data;
+            // 旧DB名 "DirectoryFlow" から新DB名 "DirectoryFlowPro" への移行
+            const legacyDbName = 'DirectoryFlow';
+            const legacyData = await this._checkLegacyDatabase(legacyDbName);
+            
+            if (legacyData && Object.keys(legacyData).length > 0) {
+                if (showProgress) {
+                    MessageProcessor.addMessage('system', '📦 旧バージョンのデータを発見しました。移行を開始します...');
+                }
+                
+                await this.importFromJSON(legacyData, false);
+                
+                if (showProgress) {
+                    MessageProcessor.addMessage('system', '✅ レガシーデータの移行が完了しました');
+                }
+                
+                return { success: true, migrated: true };
+            } else {
+                if (showProgress) {
+                    MessageProcessor.addMessage('system', '📂 移行対象のレガシーデータはありませんでした');
+                }
+                
+                return { success: true, migrated: false };
+            }
 
         } catch (error) {
-            console.error('Export failed:', error);
-            MessageProcessor.addMessage('system', `❌ エクスポートに失敗しました: ${error.message}`);
-            throw error;
+            console.warn('Legacy data migration failed:', error);
+            if (showProgress) {
+                MessageProcessor.addMessage('system', `⚠️ レガシーデータの移行に失敗: ${error.message}`);
+            }
+            return { success: false, error: error.message };
         }
     }
 
     /**
-     * JSONファイルからIndexedDBへのインポート
+     * 旧データベースの確認
      */
-    async importFromJSON(jsonData) {
-        try {
-            await storageManager.ensureInitialized();
-
-            if (storageManager.getStorageMode() !== 'indexeddb') {
-                throw new Error('IndexedDB mode required for import');
-            }
-
-            MessageProcessor.addMessage('system', '📥 JSONデータをインポート中...');
-
-            const adapter = storageManager.storageAdapter;
-
-            // 既存データのクリア（確認後）
-            if (confirm('既存のデータを削除してインポートしますか？')) {
-                await adapter.clear();
-            }
-
-            // データのインポート
-            await adapter.migrateFromMockFileSystem(jsonData);
-
-            MessageProcessor.addMessage('system', '✅ JSONデータのインポートが完了しました');
-
-            // ファイルリストの更新
-            if (window.FileManagerController) {
-                await window.FileManagerController.loadFileList();
-            }
-
-            return true;
-
-        } catch (error) {
-            console.error('Import failed:', error);
-            MessageProcessor.addMessage('system', `❌ インポートに失敗しました: ${error.message}`);
-            throw error;
-        }
+    async _checkLegacyDatabase(dbName) {
+        return new Promise((resolve) => {
+            const request = indexedDB.open(dbName);
+            
+            request.onsuccess = async () => {
+                try {
+                    const db = request.result;
+                    
+                    if (db.objectStoreNames.contains('files')) {
+                        const transaction = db.transaction(['files'], 'readonly');
+                        const store = transaction.objectStore('files');
+                        const files = await this._promisifyRequest(store.getAll());
+                        
+                        const legacyData = {};
+                        for (const file of files) {
+                            if (file.path && file.content !== undefined) {
+                                legacyData[file.path] = file.content;
+                            }
+                        }
+                        
+                        db.close();
+                        resolve(legacyData);
+                    } else {
+                        db.close();
+                        resolve(null);
+                    }
+                } catch (error) {
+                    console.warn('Error reading legacy database:', error);
+                    resolve(null);
+                }
+            };
+            
+            request.onerror = () => {
+                resolve(null);
+            };
+        });
     }
 
     /**
@@ -197,109 +339,63 @@ export class DataMigrator {
     async getStorageInfo() {
         try {
             await storageManager.ensureInitialized();
-            const storageMode = storageManager.getStorageMode();
-
-            const info = {
-                mode: storageMode,
-                canMigrate: storageMode === 'indexeddb',
+            
+            const stats = await storageManager.storageAdapter.getStorageStats();
+            
+            return {
+                mode: 'indexeddb',
+                isHealthy: true,
+                stats,
+                canExport: stats.totalFiles > 0,
+                canImport: true,
                 migrationStatus: { ...this.migrationStatus }
             };
-
-            if (storageMode === 'indexeddb') {
-                info.stats = await storageManager.storageAdapter.getStorageStats();
-            } else {
-                // メモリモードの場合
-                const adapter = storageManager.getAdapter();
-                const dataSize = JSON.stringify(adapter.data).length;
-                info.stats = {
-                    totalFiles: Object.keys(adapter.data).length,
-                    totalDirectories: 0,
-                    totalSize: dataSize,
-                    lastModified: null
-                };
-            }
-
-            return info;
 
         } catch (error) {
             console.error('Failed to get storage info:', error);
             return {
-                mode: 'unknown',
-                canMigrate: false,
-                error: error.message
+                mode: 'error',
+                isHealthy: false,
+                error: error.message,
+                canExport: false,
+                canImport: false,
+                migrationStatus: { ...this.migrationStatus }
             };
         }
     }
 
     /**
-     * IndexedDBのクリア（開発・テスト用）
-     */
-    async clearIndexedDB() {
-        try {
-            await storageManager.ensureInitialized();
-
-            if (storageManager.getStorageMode() !== 'indexeddb') {
-                throw new Error('IndexedDB mode required');
-            }
-
-            if (confirm('⚠️ IndexedDBの全データを削除しますか？この操作は取り消せません。')) {
-                await storageManager.storageAdapter.clear();
-                MessageProcessor.addMessage('system', '🗑️ IndexedDBをクリアしました');
-
-                // ファイルリストの更新
-                if (window.FileManagerController) {
-                    await window.FileManagerController.loadFileList();
-                }
-
-                return true;
-            }
-
-            return false;
-
-        } catch (error) {
-            console.error('Failed to clear IndexedDB:', error);
-            MessageProcessor.addMessage('system', `❌ IndexedDBのクリアに失敗しました: ${error.message}`);
-            throw error;
-        }
-    }
-
-    /**
-     * 移行状況の確認
+     * 移行状況の取得
      */
     getMigrationStatus() {
-        return { ...this.migrationStatus };
+        return {
+            ...this.migrationStatus,
+            inProgress: this.migrationInProgress
+        };
     }
 
     /**
-     * 移行の進捗率を計算
+     * 移行状況のリセット
      */
-    getMigrationProgress() {
-        if (!this.migrationStatus.started || this.migrationStatus.totalFiles === 0) {
-            return 0;
-        }
-
-        return Math.round((this.migrationStatus.migratedFiles / this.migrationStatus.totalFiles) * 100);
+    resetMigrationStatus() {
+        this.migrationInProgress = false;
+        this.migrationStatus = {
+            inProgress: false,
+            completed: false,
+            errors: [],
+            startTime: null,
+            endTime: null
+        };
     }
 
-    /**
-     * デバッグ情報の出力
-     */
-    async debugInfo() {
-        const info = await this.getStorageInfo();
-        console.log('🔍 Storage Debug Info:', info);
-
-        if (typeof MessageProcessor !== 'undefined') {
-            MessageProcessor.addMessage('system', `🔍 ストレージ情報: ${info.mode}モード、${info.stats?.totalFiles || 0}ファイル`);
-        }
-
-        return info;
+    // ヘルパーメソッド
+    _promisifyRequest(request) {
+        return new Promise((resolve, reject) => {
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
     }
 }
 
 // シングルトンインスタンス
 export const dataMigrator = new DataMigrator();
-
-// グローバルアクセス用（開発・デバッグ用）
-if (typeof window !== 'undefined') {
-    window.dataMigrator = dataMigrator;
-}
