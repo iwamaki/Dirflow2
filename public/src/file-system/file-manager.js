@@ -289,14 +289,14 @@ export class FileManagerController {
     }
 
     /**
-     * ファイル・ディレクトリコピー（既存ロジック維持）
+     * ファイル・ディレクトリコピー（IndexedDB対応）
      */
     static async copyFile(sourcePath, destPath) {
         await Helpers.delay(500);
 
         try {
             await storageManager.ensureInitialized();
-            const adapter = storageManager.getAdapter();
+            const adapter = storageManager.storageAdapter;
 
             const sourceFullPath = sourcePath.startsWith('/') ? sourcePath : 
                 Helpers.joinPath(AppState.currentPath, sourcePath);
@@ -326,14 +326,14 @@ export class FileManagerController {
     }
 
     /**
-     * ファイル・ディレクトリ移動（既存ロジック維持）
+     * ファイル・ディレクトリ移動（IndexedDB対応）
      */
     static async moveFile(sourcePath, destPath) {
         await Helpers.delay(500);
 
         try {
             await storageManager.ensureInitialized();
-            const adapter = storageManager.getAdapter();
+            const adapter = storageManager.storageAdapter;
 
             const sourceFullPath = sourcePath.startsWith('/') ? sourcePath : 
                 Helpers.joinPath(AppState.currentPath, sourcePath);
@@ -363,14 +363,14 @@ export class FileManagerController {
     }
 
     /**
-     * ファイル・ディレクトリ削除（既存ロジック維持）
+     * ファイル・ディレクトリ削除（IndexedDB対応）
      */
     static async deleteFile(filePath) {
         await Helpers.delay(500);
 
         try {
             await storageManager.ensureInitialized();
-            const adapter = storageManager.getAdapter();
+            const adapter = storageManager.storageAdapter;
 
             const fullPath = filePath.startsWith('/') ? filePath : 
                 Helpers.joinPath(AppState.currentPath, filePath);
