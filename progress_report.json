@@ -1,0 +1,84 @@
+{
+  "project_name": "Dirflow2 Python Server Migration",
+  "current_status": "モジュール移植フェーズ",
+  "last_updated": "2025-09-21T18:05:00Z",
+  "overall_progress_percentage": 35,
+  "modules": [
+    {
+      "name": "main.py",
+      "status": "完了 (テストエンドポイント一時追加済み)",
+      "description": "FastAPIアプリケーションのメインエントリポイント。基本的なルーティングと、各モジュールのテストエンドポイントを一時的に追加済み。",
+      "dependencies": [],
+      "progress_percentage": 100
+    },
+    {
+      "name": "requirements.txt",
+      "status": "完了",
+      "description": "必要なPythonパッケージの依存関係を定義。fastapi, uvicorn, httpx, langchain-community, langchain-google-community を追加済み。",
+      "dependencies": [],
+      "progress_percentage": 100
+    },
+    {
+      "name": "ai/llm_adapter.py",
+      "status": "完了 (prompt_builderとの連携済み)",
+      "description": "JavaScript版 llm-adapter.js のPython移植版。LLMプロバイダーの統一インターフェースを提供。prompt_builder との連携も実装済み。",
+      "dependencies": ["ai/prompt_builder.py"],
+      "progress_percentage": 100
+    },
+    {
+      "name": "ai/prompt_builder.py",
+      "status": "完了",
+      "description": "JavaScript版 prompt-builder.js のPython移植版。LLMリクエスト用のプロンプトを動的に構築。",
+      "dependencies": [],
+      "progress_percentage": 100
+    },
+    {
+      "name": "chat/conversation_manager.py",
+      "status": "完了",
+      "description": "JavaScript版 conversation-manager.js のPython移植版。会話履歴とコンテキストを管理。",
+      "dependencies": [],
+      "progress_percentage": 100
+    },
+    {
+      "name": "tool/web_search_service.py",
+      "status": "完了",
+      "description": "JavaScript版 web-search-service.js のPython移植版。LangChainを使用したWeb検索機能を提供。",
+      "dependencies": ["requirements.txt (langchain-community, langchain-google-community)"],
+      "progress_percentage": 100
+    },
+    {
+      "name": "validation/command_validator.py",
+      "status": "完了",
+      "description": "JavaScript版 command-validator.js のPython移植版。AIから提案されたコマンドの妥当性とセキュリティを検証。",
+      "dependencies": [],
+      "progress_percentage": 100
+    },
+    {
+      "name": "utils/response_utils.py",
+      "status": "完了",
+      "description": "JavaScript版 response-utils.js のPython移植。AI応答の構造化パーシング、フォールバックモック応答、ヘルスステータス生成、チャット入力バリデーション、サーバー起動ログ出力などのユーティリティ機能。",
+      "dependencies": [],
+      "progress_percentage": 100
+    },
+    {
+      "name": "ai/agent_dispatcher.py",
+      "status": "未着手",
+      "description": "JavaScript版 agent-dispatcher.js のPython移植。ユーザーの意図に基づいて適切な専門エージェントを選択し、タスクの実行を制御。",
+      "dependencies": ["ai/llm_adapter.py", "tool/web_search_service.py"],
+      "progress_percentage": 0
+    },
+    {
+      "name": "chat/chat_orchestrator.py",
+      "status": "未着手",
+      "description": "JavaScript版 chat-orchestrator.js のPython移植。チャット処理の全体フローを管理し、各専門サービスを協調させる。",
+      "dependencies": ["ai/agent_dispatcher.py", "chat/conversation_manager.py", "validation/command_validator.py", "utils/response_utils.py"],
+      "progress_percentage": 0
+    }
+  ],
+  "next_steps": [
+    "server_pythonver/ai/agent_dispatcher.py の作成と動作確認",
+    "server_pythonver/chat/chat_orchestrator.py の作成と動作確認",
+    "server_pythonver/main.py の統合とクリーンアップ (主要なAPIエンドポイントの実装、静的ファイル配信設定)",
+    "全体テストとデバッグ (フロントエンドとの連携を含む)"
+  ]
+}
