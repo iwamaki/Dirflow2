@@ -20,10 +20,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
-// 新しいモジュール構成のインポート
-import { ChatOrchestrator } from './chat-orchestrator.js';
-import { LLMAdapter } from './llm-adapter.js';
-import { validateChatInput, generateHealthStatus, logServerStart } from './response-utils.js';
+import { ChatOrchestrator } from './chat/chat-orchestrator.js';
+import { LLMAdapter } from './ai/llm-adapter.js';
+import { validateChatInput, generateHealthStatus, logServerStart } from './utils/response-utils.js';
 
 // ES6 モジュールで __dirname を取得
 const __filename = fileURLToPath(import.meta.url);
@@ -50,7 +49,7 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
     API Routes
    ========================================= */
 
-// Get available LLM providers and models
+// LLMプロバイダー情報取得エンドポイント
 app.get('/api/llm-providers', (req, res) => {
     try {
         const providers = llmAdapter.getProvidersStatus();
@@ -64,7 +63,7 @@ app.get('/api/llm-providers', (req, res) => {
     }
 });
 
-// Chat endpoint - メイン処理はChatOrchestratorに委譲
+// チャットエンドポイント
 app.post('/api/chat', async (req, res) => {
     const startTime = Date.now();
     
@@ -109,7 +108,7 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
-// Health check endpoint - 詳細な状態情報を提供
+// ヘルスチェックエンドポイント
 app.get('/api/health', (req, res) => {
     try {
         const baseStatus = generateHealthStatus();
@@ -122,13 +121,13 @@ app.get('/api/health', (req, res) => {
             services: {
                 chatOrchestrator: chatOrchestrator.getSystemStatus(),
                 llmAdapter: llmAdapter.getProvidersStatus(),
-                webSearch: searchStatus // 新規追加
+                webSearch: searchStatus 
             },
             features: {
                 ...baseStatus.features,
-                web_search: true,              // 新機能
-                langchain_integration: true,   // 新機能
-                search_history: true          // 新機能
+                web_search: true,              
+                langchain_integration: true,   
+                search_history: true          
             }
         };
 
@@ -143,7 +142,7 @@ app.get('/api/health', (req, res) => {
     }
 });
 
-// Available agents endpoint - エージェント一覧を取得
+// 利用可能なエージェント一覧
 app.get('/api/agents', (req, res) => {
     try {
         const agents = chatOrchestrator.getAvailableAgents();
@@ -161,7 +160,7 @@ app.get('/api/agents', (req, res) => {
     }
 });
 
-// System status endpoint - システム全体の詳細な状態
+// システムステータスエンドポイント
 app.get('/api/system/status', (req, res) => {
     try {
         const systemStatus = {
@@ -267,7 +266,7 @@ app.get('/api/search/providers', (req, res) => {
 });
 
 /* =========================================
-    Error Handling Middleware
+    エラーハンドリング
    ========================================= */
 app.use((err, req, res, next) => {
     console.error('🔥 Unhandled server error:', err);

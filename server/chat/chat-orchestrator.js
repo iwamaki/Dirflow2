@@ -14,16 +14,16 @@ server.jsから呼ばれるメインエントリーポイント。
 - レスポンス統合
 */
 
-import { AgentDispatcher } from './agent-dispatcher.js';
+import { AgentDispatcher } from '../ai/agent-dispatcher.js';
 import { ConversationManager } from './conversation-manager.js';
-import { ContextBuilder } from './context-builder.js';
-import { CommandValidator } from './command-validator.js';
+import { ResponseBuilder } from '../validation/response-builder.js';
+import { CommandValidator } from '../validation/command-validator.js';
 
 export class ChatOrchestrator {
     constructor() {
         this.agentDispatcher = new AgentDispatcher();
         this.conversationManager = new ConversationManager();
-        this.contextBuilder = new ContextBuilder();
+        this.responseBuilder = new ResponseBuilder();
         this.commandValidator = new CommandValidator();
     }
 
@@ -53,7 +53,7 @@ export class ChatOrchestrator {
             const validatedCommands = await this._validateCommands(agentResult.commands);
 
             // 6. 最終レスポンスの構築
-            return this.contextBuilder.buildSuccessResponse({
+            return this.responseBuilder.buildSuccessResponse({
                 ...agentResult,
                 commands: validatedCommands,
                 shouldSuggestNewChat,
@@ -65,7 +65,7 @@ export class ChatOrchestrator {
             console.error('❌ Chat Orchestrator Error:', error);
             
             // エラー時のフォールバック処理
-            return this.contextBuilder.buildErrorResponse(
+            return this.responseBuilder.buildErrorResponse(
                 error, 
                 provider, 
                 model, 

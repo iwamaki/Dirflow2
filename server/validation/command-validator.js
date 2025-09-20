@@ -20,7 +20,7 @@ export class CommandValidator {
             'create_file', 'create_directory', 'delete_file', 'copy_file', 'move_file',
             'read_file', 'edit_file', 'list_files', 
             'batch_delete', 'batch_copy', 'batch_move',
-            'web_search' // 新規追加
+            'web_search' 
         ];
 
         // 必須フィールドの定義を拡張
@@ -36,7 +36,7 @@ export class CommandValidator {
             'batch_delete': ['paths'],
             'batch_copy': ['sources', 'destination'],
             'batch_move': ['sources', 'destination'],
-            'web_search': ['query'] // 新規追加: queryは必須
+            'web_search': ['query'] 
         };
 
         // 危険な操作リスト（web_searchは安全なので含めない）
@@ -45,7 +45,7 @@ export class CommandValidator {
         // パスフィールド（web_searchには適用されない）
         this.pathFields = ['path', 'source', 'destination'];
 
-        // 検索固有のフィールド（新規追加）
+        // 検索固有のフィールド
         this.searchFields = ['query'];
     }
 

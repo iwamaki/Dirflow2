@@ -13,9 +13,9 @@ APIレスポンスの構築、エラーハンドリング、フォールバッ�
 - レスポンス形式の統一
 */
 
-import { getMockResponse } from './response-utils.js';
+import { getMockResponse } from '../utils/response-utils.js';
 
-export class ContextBuilder {
+export class ResponseBuilder {
     constructor() {
         this.defaultResponseFormat = {
             message: '',

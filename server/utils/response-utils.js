@@ -178,9 +178,9 @@ export function generateHealthStatus() {
             custom_prompts: true,
             multi_agent_system: true,
             rdd_architecture: true,
-            web_search: true,              // 新機能
-            langchain_integration: true,   // 新機能
-            search_history: true          // 新機能
+            web_search: true,              
+            langchain_integration: true,   
+            search_history: true          
         }
     };
 
