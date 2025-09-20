@@ -1,10 +1,10 @@
 /* =========================================
-    ファイル操作管理 (完全マージ版)
+    ファイル操作管理 
    ========================================= */
 
 /*
 ## 概要
-既存の実装を保持しつつ、IndexedDB完全移行に対応したファイル管理モジュール。
+既存の実装を保持しつつ、IndexedDBに対応したファイル管理モジュール。
 
 ## 責任
 - ファイルリストの読み込みとUI表示
@@ -289,7 +289,7 @@ export class FileManagerController {
     }
 
     /**
-     * ファイル・ディレクトリコピー（IndexedDB対応）
+     * ファイル・ディレクトリコピー
      */
     static async copyFile(sourcePath, destPath) {
         await Helpers.delay(500);
@@ -326,7 +326,7 @@ export class FileManagerController {
     }
 
     /**
-     * ファイル・ディレクトリ移動（IndexedDB対応）
+     * ファイル・ディレクトリ移動
      */
     static async moveFile(sourcePath, destPath) {
         await Helpers.delay(500);
@@ -363,7 +363,7 @@ export class FileManagerController {
     }
 
     /**
-     * ファイル・ディレクトリ削除（IndexedDB対応）
+     * ファイル・ディレクトリ削除
      */
     static async deleteFile(filePath) {
         await Helpers.delay(500);

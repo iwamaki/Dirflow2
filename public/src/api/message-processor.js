@@ -1,10 +1,10 @@
 /* =========================================
-    メッセージ処理・コマンド実行 (IndexedDB完全移行版)
+    メッセージ処理・コマンド実行
    ========================================= */
 
 /*
 ## 概要
-ユーザーメッセージの送信、AI応答の受信、コマンド実行、メッセージ表示を担当するクラス（完全移行版）。
+ユーザーメッセージの送信、AI応答の受信、コマンド実行、メッセージ表示を担当するクラス。
 
 ## 責任
 - UIへのメッセージ表示
@@ -94,7 +94,7 @@ export class MessageProcessor {
         }
     }
 
-    // メッセージ送信（IndexedDB対応）
+    // メッセージ送信
     static async sendMessage() {
         const message = elements.chatInput.value.trim();
         if (!message || AppState.isLoading) return;
@@ -104,7 +104,7 @@ export class MessageProcessor {
         this.setLoading(true);
 
         try {
-            // 現在のコンテキストを詳細に収集（IndexedDB対応）
+            // 現在のコンテキストを詳細に収集
             const currentFileContent = await this._getCurrentFileContent();
             const fileList = await this._getCurrentFileList();
             
@@ -167,7 +167,7 @@ export class MessageProcessor {
         }
     }
 
-    // 現在のファイル内容取得（IndexedDB対応）
+    // 現在のファイル内容取得
     static async _getCurrentFileContent() {
         if (!AppState.currentEditingFile) return null;
         
@@ -178,7 +178,7 @@ export class MessageProcessor {
                 return textarea.value;
             }
             
-            // IndexedDBから直接読み込み
+            // ストレージから直接読み込み
             await storageManager.ensureInitialized();
             const filePath = this._joinPath(AppState.currentPath, AppState.currentEditingFile);
             return await storageManager.storageAdapter.readFile(filePath);
@@ -189,7 +189,7 @@ export class MessageProcessor {
         }
     }
 
-    // 現在のファイルリスト取得（IndexedDB対応）
+    // 現在のファイルリスト取得
     static async _getCurrentFileList() {
         try {
             await storageManager.ensureInitialized();
@@ -216,7 +216,7 @@ export class MessageProcessor {
         return path1 + '/' + path2;
     }
 
-    // コマンド実行（IndexedDB対応）
+    // コマンド実行
     static async executeCommand(command) {
         console.log('Executing command:', command);
         

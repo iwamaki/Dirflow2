@@ -1,10 +1,10 @@
 /* =========================================
-    IndexedDB Storage Adapter (完全移行版)
+    IndexedDB Storage Adapter 
    ========================================= */
 
 /*
 ## 概要
-IndexedDBを使用したファイルシステムデータの永続化アダプター（完全移行版）。
+IndexedDBを使用したファイルシステムデータの永続化アダプター。
 mockFileSystemへの依存を完全に削除し、IndexedDBのみで動作。
 
 ## 責任
@@ -18,7 +18,7 @@ mockFileSystemへの依存を完全に削除し、IndexedDBのみで動作。
 
 export class StorageAdapter {
     constructor() {
-        this.dbName = 'DirectoryFlowPro';  // DB名を更新（完全移行版）
+        this.dbName = 'DirectoryFlowPro';  // DB名を更新
         this.version = 2;  // バージョンアップ
         this.db = null;
         this.initialized = false;

@@ -1,10 +1,10 @@
 /* =========================================
-    イベント処理統合 (IndexedDB完全移行版)
+    イベント処理統合 
    ========================================= */
 
 /*
 ## 概要
-アプリケーション内の様々なUI要素からのイベントを一元的に処理し、対応する機能を呼び出すクラス（完全移行版）。
+アプリケーション内の様々なUI要素からのイベントを一元的に処理し、対応する機能を呼び出すクラス。
 
 ## 責任
 - アプリケーション起動時の主要なイベントリスナーの設定
@@ -54,7 +54,7 @@ export class EventHandlers {
         elements.fabChat?.addEventListener('click', () => NavigationController.toggleChat());
 
         // モーダルイベント
-        elements.confirmFile?.addEventListener('click', this.handleCreateFile);
+        elements.createFileBtn?.addEventListener('click', this.handleCreateFile);
         elements.confirmRename?.addEventListener('click', this.handleRename);
         elements.confirmImport?.addEventListener('click', this.handleImportFiles);
 
@@ -65,6 +65,26 @@ export class EventHandlers {
 
         // キーボードイベント
         document.addEventListener('keydown', this.handleKeyDown);
+
+        // モーダルを閉じるボタンのイベントリスナー
+        document.querySelectorAll('.modal-close').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const modal = e.target.closest('.modal, .chat-overlay'); // .chat-overlay もモーダルとして扱う
+                if (modal) {
+                    ModalController.hideModal(modal.id);
+                }
+            });
+        });
+
+        // data-modal="close" を持つボタンのイベントリスナー
+        document.querySelectorAll('[data-modal="close"]').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const modal = e.target.closest('.modal');
+                if (modal) {
+                    ModalController.hideModal(modal.id);
+                }
+            });
+        });
 
         console.log('✅ Event handlers initialized');
     }
@@ -155,7 +175,7 @@ export class EventHandlers {
         }
     }
 
-    // ファイル作成処理（IndexedDB対応）
+    // ファイル作成処理
     static async handleCreateFile() {
         const fileName = elements.fileNameInput?.value.trim();
         const initialContent = elements.fileContentInput?.value || '';
@@ -194,7 +214,7 @@ export class EventHandlers {
         }
     }
 
-    // フォルダ作成処理（IndexedDB対応）
+    // フォルダ作成処理
     static async handleCreateFolder() {
         const folderName = prompt('フォルダ名を入力してください:');
         
@@ -221,7 +241,7 @@ export class EventHandlers {
         }
     }
 
-    // ファイルリネーム処理（IndexedDB対応）
+    // ファイルリネーム処理
     static async handleRename() {
         const oldFileName = elements.renameOldName?.textContent;
         const newFileName = elements.renameNewNameInput?.value.trim();
@@ -261,7 +281,7 @@ export class EventHandlers {
         }
     }
 
-    // ファイルインポート処理（IndexedDB対応）
+    // ファイルインポート処理
     static async handleImportFiles() {
         const files = elements.fileImportInput?.files;
         const importPath = elements.importPathInput?.value.trim() || AppState.currentPath;
@@ -330,7 +350,7 @@ export class EventHandlers {
         });
     }
 
-    // システムプロンプト登録・更新処理（IndexedDB対応）
+    // システムプロンプト登録・更新処理
     static async handleSystemPrompt() {
         const name = elements.promptNameInput?.value.trim();
         const content = elements.promptContentInput?.value.trim();
@@ -384,7 +404,7 @@ export class EventHandlers {
         }
     }
 
-    // 削除確認ダイアログ（IndexedDB対応）
+    // 削除確認ダイアログ
     static async showDeleteConfirmation(fileName) {
         const confirmed = confirm(`"${fileName}" を削除してもよろしいですか？\nこの操作は取り消せません。`);
         

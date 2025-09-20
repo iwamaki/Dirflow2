@@ -1,10 +1,10 @@
 /* =========================================
-    設定とグローバルデータ (IndexedDB完全移行版)
+    設定とグローバルデータ
    ========================================= */
 
 /*
 ## 概要
-アプリケーション全体で使用される設定、IndexedDBストレージ管理、およびDOM要素への参照を一元的に管理するモジュール。
+アプリケーション全体で使用される設定、ストレージ管理、およびDOM要素への参照を一元的に管理するモジュール。
 
 ## 責任
 - アプリケーション設定の定義
@@ -23,28 +23,11 @@ export const STORAGE_CONFIG = {
     createInitialData: true    // 初期データ作成有効化
 };
 
-// 初期データ定義（初回起動時にIndexedDB内に作成）
+// 初期データ定義（初回起動時にストレージ内に作成）
 export const INITIAL_DATA = {
-    '/workspace/README.md': `# AIファイルマネージャー - IndexedDB版
+    '/workspace/README.md': `# AIファイルマネージャー - 
 
-## 新機能
-* Claude API統合
-* 会話履歴管理
-* ファイルコピー・移動
-* ディレクトリ作成
-* 一括操作
-* 複数選択
-* JSON形式レスポンス対応
-* セキュリティ強化
-* **IndexedDB完全移行（永続化強化）**
-
-## データ永続化
-このアプリケーションはIndexedDBを使用してデータを永続化します：
-- ブラウザを閉じてもデータが保持されます
-- 大容量ファイルの保存が可能です
-- 高速な検索・操作が可能です
-
-## 使い方
+# 使い方
 
 ### 基本コマンド
 * **ファイル作成**: "新しいファイルを作って"、"sample.txt を作成して"
@@ -73,21 +56,7 @@ export const INITIAL_DATA = {
 
 AI File Manager の使い方について説明します。
 
-## データ永続化について
-
-このアプリケーションはIndexedDBを使用してデータを永続化します：
-
-- ブラウザを閉じてもデータが保持されます
-- 大容量ファイルの保存が可能です
-- 高速な検索・操作が可能です
-- ブラウザのローカルストレージより高機能です
-
 ## トラブルシューティング
-
-### データが消えた場合
-1. ブラウザの開発者ツールでIndexedDBを確認
-2. プライベートモードでないことを確認
-3. ブラウザのストレージクリアを実行していないか確認
 
 ### 動作が重い場合
 1. 不要なファイルを削除
@@ -99,12 +68,10 @@ AI File Manager の使い方について説明します。
 
     '/workspace/examples/sample.txt': `これはサンプルテキストファイルです。
 
-IndexedDBによる永続化テストのために作成されました。
-
 編集して保存してみてください！`
 };
 
-// ストレージマネージャークラス（IndexedDB専用）
+// ストレージマネージャークラス
 export class StorageManager {
     constructor() {
         this.storageAdapter = storageAdapter;
@@ -112,7 +79,7 @@ export class StorageManager {
     }
 
     /**
-     * ストレージの初期化（IndexedDB専用）
+     * ストレージの初期化
      */
     async initialize() {
         if (this.initialized) {
@@ -144,7 +111,7 @@ export class StorageManager {
         try {
             const stats = await this.storageAdapter.getStorageStats();
             
-            // IndexedDBが空の場合のみ初期データを作成
+            // 空の場合のみ初期データを作成
             if (stats.totalFiles === 0) {
                 console.log('🔧 Creating initial data in IndexedDB...');
                 
