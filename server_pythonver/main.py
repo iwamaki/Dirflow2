@@ -82,7 +82,7 @@ async def get_validator_stats():
 async def get_mock_response_endpoint():
     return get_mock_response("ヘルプ")
 
-@app.get("/api/health-status")
+@app.get("/api/health")
 async def get_health_status():
     return {
         "base_status": generate_health_status(),
