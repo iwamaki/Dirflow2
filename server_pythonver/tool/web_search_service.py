@@ -186,10 +186,9 @@ class WebSearchService:
         results = []
         if isinstance(raw_results, list):
             results = raw_results
-        elif hasattr(raw_results, 'results') and isinstance(raw_results.results, list):
-            results = raw_results.results
-        elif isinstance(raw_results, str):
-            # 文字列結果の場合（DuckDuckGo等）
+        elif isinstance(raw_results, dict) and 'results' in raw_results and isinstance(raw_results['results'], list):
+            results = raw_results['results']
+        elif isinstance(raw_results, str):            # 文字列結果の場合（DuckDuckGo等）
             return [{
                 "title": "Search Result",
                 "url": "",
@@ -271,6 +270,32 @@ class WebSearchService:
                 top_sources.append(source)
 
         return f"\"{query}\" について {total_results} 件の検索結果が見つかりました。主な情報源: {'. '.join(top_sources)}"
+
+    def perform_search_sync(self, query: str, options: dict = None):
+        """同期版の検索メソッド（LangChainツール用）"""
+        import asyncio
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # すでにイベントループが実行中の場合
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(asyncio.run, self.perform_search(query, options))
+                    return future.result()
+            else:
+                # イベントループが実行中でない場合
+                return asyncio.run(self.perform_search(query, options))
+        except Exception as e:
+            return {
+                "success": False,
+                "query": query,
+                "results": [],
+                "error": str(e),
+                "metadata": {
+                    "provider": "error",
+                    "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
+                }
+            }
 
     def get_status(self):
         return {

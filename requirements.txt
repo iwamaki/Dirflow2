@@ -1,0 +1,9 @@
+fastapi==0.104.1
+uvicorn==0.23.2
+httpx>=0.28.1  # バージョンを更新
+langchain-community==0.3.29
+langchain-google-community==2.0.7
+langchain>=0.3.20,<0.4.0  # langchain-tavily の要件に合わせる
+langchain-core
+langchain-google-genai==2.0.7
+python-dotenv==0.21.1
