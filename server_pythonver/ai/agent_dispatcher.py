@@ -70,43 +70,223 @@ class AgentDispatcher:
             }
         }
 
-    def dispatch(self, user_message: str, context: dict):
-        # ユーザーメッセージから意図を推測し、適切なエージェントを選択
-        # ここでは簡略化のため、キーワードベースでエージェントを選択する
-        # 実際にはLLMを使って意図を推測する
-        if "ファイル" in user_message or "ディレクトリ" in user_message or "フォルダ" in user_message or \
-           "作成" in user_message or "読んで" in user_message or "編集" in user_message or \
-           "削除" in user_message or "コピー" in user_message or "移動" in user_message or \
-           "一覧" in user_message or "一括" in user_message:
-            selected_agent = self.agents["file_expert"]
-        elif "検索" in user_message or "調べて" in user_message or "リサーチ" in user_message:
-            selected_agent = self.agents["web_search_expert"]
-        else:
-            selected_agent = self.agents["general_assistant"]
+    async def dispatch(self, user_message: str, context: dict, provider: str = "gemini", model: str = None, test_invalid_command: bool = False):
+        try:
+            selected_agent = await self._select_agent_with_llm(user_message, context)
+            
+            print(f"Selected Agent: {selected_agent['name']}")
 
-        print(f"Selected Agent: {selected_agent['name']}")
+            prompt = self._build_agent_prompt(selected_agent, user_message, context)
+            
+            actual_provider = provider if provider else context.get("provider", "gemini")
+            actual_model = model if model else context.get("model", "gemini-1.5-flash")
 
-        # 選択されたエージェントのプロンプトを構築
-        prompt = self._build_agent_prompt(selected_agent, user_message, context)
+            llm_response = ""
+            parse_success = False
+            warning = None
+            error = None
+            message_from_llm = None
 
-        # LLMを呼び出して応答を取得
-        llm_response = self.llm_adapter.get_completion(prompt, context.get("provider", "gemini"), context.get("model", "gemini-pro"))
+            try:
+                if test_invalid_command:
+                    llm_response = "```json\n{\"action\": \"non_existent_action\", \"path\": \"test.txt\"}\n```"
+                else:
+                    llm_response = await self.llm_adapter.call_llm(prompt, actual_provider, actual_model, context)
+                
+                # 汎用アシスタントの場合は直接メッセージとして扱う
+                if selected_agent["name"] == "汎用アシスタント":
+                    parsed_data = {
+                        "commands": [],
+                        "parse_success": True,  # 常に成功とみなす
+                        "warning": None,
+                        "message": llm_response
+                    }
+                else:
+                    parsed_data = self._parse_llm_response_for_commands(llm_response)
+                
+                commands = parsed_data["commands"]
+                parse_success = parsed_data["parse_success"]
+                warning = parsed_data["warning"]
+                message_from_llm = parsed_data["message"]
 
-        # LLMの応答をパースし、コマンドを抽出
-        commands = self._parse_llm_response_for_commands(llm_response)
+            except Exception as e:
+                error = str(e)
+                warning = f"LLM応答処理中にエラーが発生: {e}"
+                commands = []  # エラー時はコマンドなし
+                print(f"❌ AgentDispatcher: LLM call failed: {e}")
 
-        # コマンドのバリデーション
-        if commands:
             validated_commands = []
-            for cmd in commands:
-                try:
-                    if self.command_validator.validate(cmd):
-                        validated_commands.append(cmd)
-                except ValueError as e:
-                    print(f"Command validation failed: {e} for command: {cmd}")
-            return {"agent": selected_agent["name"], "commands": validated_commands, "raw_llm_response": llm_response}
-        else:
-            return {"agent": selected_agent["name"], "message": llm_response, "raw_llm_response": llm_response}
+            if commands:
+                for cmd in commands:
+                    try:
+                        if self.command_validator.validate(cmd):
+                            validated_commands.append(cmd)
+                        else:
+                            if warning is None:
+                                warning = f"コマンドバリデーション失敗: {cmd}"
+                            else:
+                                warning += f"; コマンドバリデーション失敗: {cmd}"
+                    except ValueError as e:
+                        print(f"Command validation failed: {e} for command: {cmd}")
+                        if warning is None:
+                            warning = f"コマンドバリデーション失敗: {e}"
+                        else:
+                            warning += f"; コマンドバリデーション失敗: {e}"
+
+            result = {
+                "agent": selected_agent["name"],
+                "commands": validated_commands,
+                "raw_llm_response": llm_response,
+                "parse_success": parse_success,
+                "warning": warning,
+                "error": error,
+                "message": message_from_llm if message_from_llm else (llm_response if not parse_success and not error else "処理が完了しました。")
+            }
+
+            return result
+
+        except Exception as e:
+            print(f"❌ AgentDispatcher: Critical error in dispatch: {e}")
+            # 致命的エラーが発生した場合のフォールバック
+            return {
+                "agent": "general_assistant",
+                "commands": [],
+                "raw_llm_response": "",
+                "parse_success": False,
+                "warning": "AgentDispatcherで予期せぬエラーが発生しました",
+                "error": str(e),
+                "message": f"申し訳ありません。処理中にエラーが発生しました: {e}"
+            }
+
+    def _parse_llm_response_for_commands(self, llm_response: str):
+        commands = []
+        parse_success = False
+        warning = None
+        message_from_llm = None
+
+        try:
+            # JSONブロックの抽出
+            json_content = llm_response.strip()
+            if "```json" in json_content:
+                start = json_content.find("```json") + len("```json")
+                end = json_content.rfind("```")
+                if end > start:
+                    json_content = json_content[start:end].strip()
+        
+            # JSONとして解析
+            try:
+                parsed = json.loads(json_content)
+                
+                # パースされたJSONの処理
+                if isinstance(parsed, dict):
+                    if "action" in parsed:  # 単一コマンドの場合
+                        commands = [parsed]
+                        parse_success = True
+                    elif "commands" in parsed and isinstance(parsed["commands"], list):
+                        commands = parsed["commands"]
+                        parse_success = True
+                    if "message" in parsed:
+                        message_from_llm = parsed["message"]
+                        parse_success = True
+                elif isinstance(parsed, list):
+                    commands = parsed
+                    parse_success = True
+                else:
+                    warning = "LLM応答は有効なJSONですが、予期しない形式です (dictまたはlistではありません)。"
+                    message_from_llm = llm_response  # フォールバックとして元のレスポンスを使用
+        
+            except json.JSONDecodeError:
+                # JSONとして解析できない場合
+                warning = "LLM応答のJSONパースに失敗しました"
+                message_from_llm = llm_response
+                parse_success = False  # コマンド系エージェントの場合、JSONパース失敗は処理失敗とみなす
+                
+        except Exception as e:
+            warning = f"LLM応答のパース中に予期せぬエラーが発生しました: {e}"
+            message_from_llm = llm_response  # エラー時は元のレスポンスをメッセージとして設定
+        
+        return {
+            "commands": commands, 
+            "parse_success": parse_success, 
+            "warning": warning, 
+            "message": message_from_llm or llm_response  # message_from_llmがNoneの場合は元のレスポンスを使用
+        }
+
+    def get_status(self):
+        """AgentDispatcherの現在の状態を取得する"""
+        import datetime # ここでインポート
+        return {
+            "initialized_agents": list(self.agents.keys()),
+            "web_search_service_status": self.web_search_service.get_status(),
+            "command_validator_stats": self.command_validator.get_validator_stats(),
+            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
+        }
+
+    async def _select_agent_with_llm(self, user_message: str, context: dict):
+        """LLMを使用してユーザーの意図を分析し、最適なエージェントを選択する"""
+        # エージェント選択用のプロンプト
+        agent_selection_prompt = self._build_agent_selection_prompt(user_message)
+        
+        # LLMを呼び出して意図分析を行う（より軽量なモデルを使用可能）
+        model = context.get("agent_selection_model", context.get("model", "gemini-1.5-flash"))
+        provider = context.get("provider", "gemini")
+        
+        try:
+            llm_response = await self.llm_adapter.call_llm(
+                agent_selection_prompt, 
+                provider, 
+                model, 
+                {"max_tokens": 100}  # 短い応答で十分
+            )
+            
+            # LLMの応答から選択されたエージェントを特定
+            agent_key = self._parse_agent_selection_response(llm_response)
+            if agent_key in self.agents:
+                return self.agents[agent_key]
+        except Exception as e:
+            print(f"エージェント選択中にエラーが発生: {e}")
+        
+        # エラー時やLLMが明確な選択を返さなかった場合はデフォルトを使用
+        return self.agents["general_assistant"]
+    
+    def _build_agent_selection_prompt(self, user_message: str):
+        """エージェント選択のためのプロンプトを構築する"""
+        agent_descriptions = "\n".join([
+            f"- {key}: {agent['name']} - {agent['description']}"
+            for key, agent in self.agents.items()
+        ])
+        
+        return f"""ユーザーの入力メッセージから、どのエージェントが対応すべきか判断してください。
+選択肢は次のとおりです：
+{agent_descriptions}
+
+応答は、選択したエージェントのキー（file_expert、web_search_expert、general_assistant）のみを返してください。
+他の説明は不要です。
+
+ユーザーのメッセージ：{user_message}
+
+選択されたエージェント："""
+
+    def _parse_agent_selection_response(self, response: str):
+        """LLMの応答からエージェントのキーを抽出する"""
+        response = response.strip().lower()
+        
+        # キーワードの完全一致を試す
+        if response == "file_expert":
+            return "file_expert"
+        elif response == "web_search_expert":
+            return "web_search_expert"
+        elif response == "general_assistant":
+            return "general_assistant"
+            
+        # 部分一致を試す
+        if "file" in response or "ファイル" in response:
+            return "file_expert"
+        elif "search" in response or "検索" in response or "web" in response:
+            return "web_search_expert"
+        
+        # デフォルト
+        return "general_assistant"
 
     def _build_agent_prompt(self, agent_info: dict, user_message: str, context: dict):
         prompt = agent_info["prompt_template"]
@@ -115,20 +295,7 @@ class AgentDispatcher:
         
         # ユーザーメッセージを追加
         prompt += f"\nユーザーの指示: {user_message}"
+        print(f"Generated Agent Prompt:\n{prompt}")
         return prompt
 
-    def _parse_llm_response_for_commands(self, llm_response: str):
-        # LLMの応答からJSON形式のコマンドを抽出するロジック
-        # ここでは、応答が直接JSON文字列であると仮定
-        try:
-            # LLMの応答がMarkdownのコードブロック形式で返される場合を考慮
-            if llm_response.strip().startswith("```json"):
-                json_str = llm_response.strip()[len("```json"):].strip()
-                if json_str.endswith("```"):
-                    json_str = json_str[:-len("```")].strip()
-                return json.loads(json_str)
-            else:
-                # 直接JSONとしてパースを試みる
-                return json.loads(llm_response)
-        except json.JSONDecodeError:
-            return []
+

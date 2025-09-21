@@ -30,7 +30,7 @@ LLM_PROVIDERS = {
         "name": "Google Gemini",
         "api_url": "https://generativelanguage.googleapis.com/v1beta/models",
         "models": [
-            "gemini-2.5-flash-lite",
+            "gemini-1.5-flash",
             "gemini-2.5-flash",
             "gemini-2.5-pro"
         ],

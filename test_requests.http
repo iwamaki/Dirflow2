@@ -1,0 +1,49 @@
+### GET / (ルートエンドポイント)
+GET http://localhost:8000/
+
+###
+
+### GET /api/llm-providers (LLMプロバイダーステータス)
+GET http://localhost:8000/api/llm-providers
+
+###
+
+### GET /api/health-status (ヘルスステータス)
+GET http://localhost:8000/api/health-status
+
+###
+
+### POST /api/dispatch (メッセージディスパッチ)
+POST http://localhost:8000/api/dispatch
+Content-Type: application/json
+
+{
+  "message": "こんにちは",
+  "provider": "gemini",
+  "model": "gemini-2.5-flash",
+  "context": {
+    "currentPath": "/app/project"
+  }
+}
+
+###
+
+### GET /api/dispatch (テスト用GETエンドポイント)
+GET http://localhost:8000/api/dispatch?message=テストメッセージ&provider=gemini&model=gemini-1.5-flash
+
+###
+
+### POST /api/chat (チャットエンドポイントテスト)
+POST http://localhost:8000/api/chat
+Content-Type: application/json
+
+{
+  "message": "ファイル一覧を表示して",
+  "provider": "gemini",
+  "model": "gemini-2.5-flash",
+  "context": {
+    "currentPath": "/workspace"
+  }
+}
+
+###

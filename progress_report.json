@@ -62,22 +62,20 @@
     },
     {
       "name": "ai/agent_dispatcher.py",
-      "status": "未着手",
+      "status": "完了 (テスト済み)",
       "description": "JavaScript版 agent-dispatcher.js のPython移植。ユーザーの意図に基づいて適切な専門エージェントを選択し、タスクの実行を制御。",
       "dependencies": ["ai/llm_adapter.py", "tool/web_search_service.py"],
-      "progress_percentage": 0
+      "progress_percentage": 100
     },
     {
       "name": "chat/chat_orchestrator.py",
-      "status": "未着手",
+      "status": "完了 (テスト済み)",
       "description": "JavaScript版 chat-orchestrator.js のPython移植。チャット処理の全体フローを管理し、各専門サービスを協調させる。",
       "dependencies": ["ai/agent_dispatcher.py", "chat/conversation_manager.py", "validation/command_validator.py", "utils/response_utils.py"],
-      "progress_percentage": 0
+      "progress_percentage": 100
     }
   ],
   "next_steps": [
-    "server_pythonver/ai/agent_dispatcher.py の作成と動作確認",
-    "server_pythonver/chat/chat_orchestrator.py の作成と動作確認",
     "server_pythonver/main.py の統合とクリーンアップ (主要なAPIエンドポイントの実装、静的ファイル配信設定)",
     "全体テストとデバッグ (フロントエンドとの連携を含む)"
   ]

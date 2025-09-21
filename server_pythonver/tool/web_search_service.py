@@ -1,11 +1,12 @@
 import os
 import datetime
+import asyncio
 from urllib.parse import urlparse
 
-# LangChainのインポート (インストールが必要)
-# from langchain_community.tools import TavilySearchResults
-# from langchain_community.tools import DuckDuckGoSearch
-# from langchain_google_community.tools import GoogleCustomSearch
+# LangChainのインポート 
+# from langchain_tavily import TavilySearch
+# from langchain_community.utilities.duckduckgo_search import DuckDuckGoSearchAPIWrapper
+# from langchain_google_community import GoogleSearchAPIWrapper
 
 class WebSearchService:
     def __init__(self):
@@ -17,37 +18,35 @@ class WebSearchService:
         self._initialize_search_providers()
 
     def _initialize_search_providers(self):
-        # Tavily Search (推奨 - AIに最適化された検索)
+        # Tavily Search 
         if os.getenv("TAVILY_API_KEY"):
             try:
-                from langchain_community.tools import TavilySearchResults
-                self.search_providers["tavily"] = TavilySearchResults(
+                from langchain_tavily import TavilySearch
+                self.search_providers["tavily"] = TavilySearch(
                     max_results=self.max_results_per_search,
                     api_key=os.getenv("TAVILY_API_KEY")
                 )
             except ImportError:
-                print("Warning: TavilySearchResults not installed. Please install langchain-community.")
+                print("Warning: TavilySearch not installed. Please install langchain-tavily.")
 
         # Google Custom Search
         if os.getenv("GOOGLE_SEARCH_API_KEY") and os.getenv("GOOGLE_CSE_ID"):
             try:
-                from langchain_community.tools.google_search import GoogleSearchAPIWrapper
+                from langchain_google_community import GoogleSearchAPIWrapper
                 self.search_providers["google"] = GoogleSearchAPIWrapper(
                     google_api_key=os.getenv("GOOGLE_SEARCH_API_KEY"),
                     google_cse_id=os.getenv("GOOGLE_CSE_ID")
                 )
             except ImportError:
-                print("Warning: GoogleSearchAPIWrapper not installed. Please install langchain-community.")
+                print("Warning: GoogleSearchAPIWrapper not installed. Please install langchain-google-community.")
 
         # DuckDuckGo (APIキー不要、フォールバック用)
         try:
-            from langchain_community.tools import DuckDuckGoSearch
-            self.search_providers["duckduckgo"] = DuckDuckGoSearch(
-                max_results=self.max_results_per_search
-            )
+            from langchain_community.utilities.duckduckgo_search import DuckDuckGoSearchAPIWrapper
+            
+            self.search_providers["duckduckgo"] = DuckDuckGoSearchAPIWrapper(max_results=self.max_results_per_search)
         except ImportError:
-            print("Warning: DuckDuckGoSearch not installed. Please install langchain-community.")
-
+            print("Warning: DuckDuckGoSearch not installed. Please install 'langchain-community' and 'ddgs' packages.")
 
         print(f"🔍 WebSearchService: Initialized {len(self.search_providers)} search providers")
 
@@ -70,8 +69,33 @@ class WebSearchService:
                 raise ValueError("利用可能な検索プロバイダーがありません")
 
             start_time = datetime.datetime.now()
-            # LangChainのinvokeメソッドは同期的に動作する場合があるため、awaitを付ける
-            raw_results = await selected_provider_instance.ainvoke(query)
+            
+            # 非同期対応チェック
+            raw_results = None
+            try:
+                if hasattr(selected_provider_instance, 'ainvoke'):
+                    # 非同期メソッドがある場合
+                    raw_results = await selected_provider_instance.ainvoke(query)
+                elif hasattr(selected_provider_instance, 'arun'):
+                    # 別の非同期メソッド名の場合
+                    raw_results = await selected_provider_instance.arun(query)
+                else:
+                    # 非同期メソッドがない場合、同期メソッドを非同期で実行
+                    loop = asyncio.get_event_loop()
+                    if hasattr(selected_provider_instance, 'invoke'):
+                        raw_results = await loop.run_in_executor(None, lambda: selected_provider_instance.invoke(query))
+                    elif hasattr(selected_provider_instance, 'run'):
+                        raw_results = await loop.run_in_executor(None, lambda: selected_provider_instance.run(query))
+                    else:
+                        # ツールの場合、funcを直接呼び出す
+                        if hasattr(selected_provider_instance, 'func'):
+                            raw_results = await loop.run_in_executor(None, lambda: selected_provider_instance.func(query))
+                        else:
+                            raise ValueError(f"検索プロバイダー {provider_pref} に有効な実行メソッドがありません")
+            except asyncio.CancelledError:
+                print("⚠️ WebSearchService: Search operation was cancelled")
+                raise  # キャンセルを伝播させる
+            
             search_time = (datetime.datetime.now() - start_time).total_seconds() * 1000
 
             formatted_results = self._format_search_results(raw_results, {
@@ -102,6 +126,9 @@ class WebSearchService:
                 }
             }
 
+        except asyncio.CancelledError:
+            print("⚠️ WebSearchService: Search operation was cancelled")
+            raise  # キャンセルを明示的に伝播
         except Exception as e:
             print(f"❌ WebSearchService: Search failed: {e}")
             return {
