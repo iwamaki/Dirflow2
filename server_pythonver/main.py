@@ -13,13 +13,17 @@ import os
 import uvicorn
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from contextlib import asynccontextmanager
 
 load_dotenv()
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # スタートアップ処理（必要に応じて追加）
+    yield
+    # シャットダウン処理（必要に応じて追加）
 
-# 静的ファイル配信の設定
-app.mount("/static", StaticFiles(directory="public", html=True), name="static")
+app = FastAPI(lifespan=lifespan)
 
 # リクエストボディ用のPydanticモデル
 class DispatchRequest(BaseModel):
@@ -36,11 +40,6 @@ command_validator = CommandValidator()
 response_builder = ResponseBuilder()
 agent_dispatcher = AgentDispatcher(llm_adapter, web_search_service, command_validator)
 chat_orchestrator = ChatOrchestrator(agent_dispatcher, conversation_manager, command_validator, response_builder)
-
-# ルートエンドポイント
-@app.get("/")
-async def read_root():
-    return FileResponse("public/index.html")
 
 # チャットエンドポイント
 @app.post("/api/chat")
@@ -106,6 +105,9 @@ async def dispatch_message(request: DispatchRequest):
 async def dispatch_message_get(message: str = "テスト用メッセージ", provider: str = "gemini", model: str = None):
     context = {"currentPath": "/app/project"}
     return await chat_orchestrator.process_chat(message, provider, model, context)
+
+# 静的ファイル配信の設定
+app.mount("/", StaticFiles(directory="public", html=True), name="public")
 
 # サーバー起動
 if __name__ == "__main__":

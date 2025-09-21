@@ -60,7 +60,11 @@ class LLMAdapter:
 
         self._validate_provider(provider)
 
-        selected_model = model if model else self.providers[provider]["default_model"]
+        # モデルが指定されていない、または'undefined'文字列の場合、プロバイダーのデフォルトモデルを使用
+        if not model or model == "undefined":
+            selected_model = self.providers[provider]["default_model"]
+        else:
+            selected_model = model
 
         try:
             print(f"🤖 LLM Adapter: Calling {provider} with model {selected_model}")
@@ -112,9 +116,10 @@ class LLMAdapter:
         payload = {
             "model": model,
             "max_tokens": 2048,
-            "messages": prompt_data["messages"],
-            "system": prompt_data["system"]
+            "messages": prompt_data["messages"]
         }
+        if "system" in prompt_data and prompt_data["system"]:
+            payload["system"] = prompt_data["system"]
 
         response = await self.http_client.post(self.providers["claude"]["api_url"], headers=headers, json=payload)
         response.raise_for_status()

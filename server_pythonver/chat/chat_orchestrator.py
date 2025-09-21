@@ -16,7 +16,7 @@ class ChatOrchestrator:
     async def process_chat(self, message: str, provider: str = "gemini", model: str = None, context: dict = None):
         if context is None:
             context = {}
-
+            
         try:
             # 1. 入力バリデーション (ここでは簡易的に、必要に応じてresponse_utils.validate_chat_inputを使用)
             if not message or not isinstance(message, str):
@@ -35,12 +35,18 @@ class ChatOrchestrator:
                 model
             )
             if agent_result is None:
-                raise ValueError("Agent dispatcher returned None")  # None の場合に例外を投げてエラーハンドリングへ
+                print("⚠️ Agent dispatcher returned None. Building fallback response.")
+                return self.response_builder.build_fallback_response(
+                    message,
+                    enriched_context,
+                    reason="Agent dispatcher failed to return a result."
+                )
 
             # 4. コマンドの検証
             validated_commands = self._validate_commands(agent_result.get("commands", []))
 
             # 5. 最終レスポンスの構築 (ResponseBuilderを使用)
+            custom_prompt = enriched_context.get("customPrompt") or {}
             return self.response_builder.build_success_response({
                 "message": agent_result.get("message", "処理が完了しました。"),
                 "commands": validated_commands,
@@ -52,19 +58,24 @@ class ChatOrchestrator:
                 "warning": agent_result.get("warning"),
                 "error": agent_result.get("error"),
                 "should_suggest_new_chat": self.conversation_manager.should_suggest_new_chat(enriched_context), # 会話マネージャーから取得
-                "custom_prompt_used": bool(enriched_context.get("customPrompt", {}).get("enabled")),
-                "custom_prompt_name": enriched_context.get("customPrompt", {}).get("name")
+                "custom_prompt_used": bool(custom_prompt.get("enabled")),
+                "custom_prompt_name": custom_prompt.get("name"),
+                "debug_context": enriched_context # デバッグ用にコンテキストを追加
             })
 
         except Exception as e:
             print(f"❌ Chat Orchestrator Error: {e}")
+
+            # contextがNoneの場合に備えて空の辞書を渡す
+            safe_context = context if context is not None else {}
+
             # エラー時のフォールバック処理 (ResponseBuilderを使用)
             return self.response_builder.build_error_response(
                 e,
                 provider,
                 model,
                 message,
-                context
+                safe_context
             )
 
     def _validate_commands(self, commands: list) -> list:

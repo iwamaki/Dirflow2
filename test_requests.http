@@ -39,11 +39,10 @@ Content-Type: application/json
 
 {
   "message": "ファイル一覧を表示して",
-  "provider": "gemini",
-  "model": "gemini-2.5-flash",
+  "provider": "claude",
+  "model": "claude-3-haiku-20240307",
   "context": {
     "currentPath": "/workspace"
   }
 }
 
-###

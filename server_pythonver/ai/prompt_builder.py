@@ -49,16 +49,29 @@ class PromptBuilder:
         return self
 
     def _replace_template_vars(self, text: str, context: dict):
+        # textがNoneの場合のフォールバック
+        if text is None:
+            text = ""
+
         file_list = context.get("fileList", [])
         conversation_history = context.get("conversationHistory", [])
 
-        return text.replace("{{CURRENT_PATH}}", context.get("currentPath", "/workspace")) \
-                   .replace("{{FILE_COUNT}}", str(len(file_list))) \
-                   .replace("{{FILE_LIST}}", json.dumps(file_list, indent=2)) \
-                   .replace("{{HISTORY_COUNT}}", str(len(conversation_history))) \
-                   .replace("{{CURRENT_FILE}}", context.get("currentFile", "なし")) \
-                   .replace("{{CUSTOM_PROMPT_NAME}}", self.custom_prompt.get("name", "") if self.custom_prompt else "") \
-                   .replace("{{OPEN_FILE_INFO}}", context.get("openFileInfo", ""))
+        # 安全な値の取得
+        current_path = context.get("currentPath") or "/workspace"
+        file_count = str(len(file_list))
+        file_list_str = json.dumps(file_list, indent=2)
+        history_count = str(len(conversation_history))
+        current_file = context.get("currentFile") or "なし"
+        custom_prompt_name = (self.custom_prompt.get("name") or "") if self.custom_prompt else ""
+        open_file_info = context.get("openFileInfo") or ""
+
+        return text.replace("{{CURRENT_PATH}}", current_path) \
+                   .replace("{{FILE_COUNT}}", file_count) \
+                   .replace("{{FILE_LIST}}", file_list_str) \
+                   .replace("{{HISTORY_COUNT}}", history_count) \
+                   .replace("{{CURRENT_FILE}}", current_file) \
+                   .replace("{{CUSTOM_PROMPT_NAME}}", custom_prompt_name) \
+                   .replace("{{OPEN_FILE_INFO}}", open_file_info)
 
     def build_system_prompt(self):
         if self.custom_prompt and self.custom_prompt.get("content"):

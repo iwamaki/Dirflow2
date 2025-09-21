@@ -89,7 +89,7 @@ class ConversationManager:
             "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "historyCount": len(context.get("conversationHistory", [])),
             "fileCount": len(context.get("fileList", [])),
-            "hasCustomPrompt": bool(context.get("customPrompt", {}).get("enabled")),
+            "hasCustomPrompt": bool((context.get("customPrompt") or {}).get("enabled")),
             "hasOpenFile": bool(context.get("currentFile")),
             "contextSize": self._calculate_context_size(context)
         }
@@ -151,8 +151,8 @@ class ConversationManager:
 
         size += len(context.get("currentPath", ""))
         size += len(json.dumps(context.get("fileList", [])))
-        size += len(context.get("currentFile", ""))
-        size += len(context.get("openFileInfo", ""))
+        size += len(str(context.get("currentFile", "")))  
+        size += len(str(context.get("openFileInfo", ""))) 
 
         size += self._calculate_total_history_length(context.get("conversationHistory", []))
 
