@@ -18,37 +18,52 @@ class WebSearchService:
         self._initialize_search_providers()
 
     def _initialize_search_providers(self):
-        # Tavily Search 
-        if os.getenv("TAVILY_API_KEY"):
+        print("\n--- 🔍 Initializing Search Providers ---")
+        # Tavily Search
+        tavily_key = os.getenv("TAVILY_API_KEY")
+        if tavily_key:
+            print("✅ TAVILY_API_KEY found.")
             try:
                 from langchain_tavily import TavilySearch
                 self.search_providers["tavily"] = TavilySearch(
                     max_results=self.max_results_per_search,
-                    api_key=os.getenv("TAVILY_API_KEY")
+                    api_key=tavily_key
                 )
+                print("   -> TavilySearch initialized successfully.")
             except ImportError:
-                print("Warning: TavilySearch not installed. Please install langchain-tavily.")
+                print("   -> ⚠️ Warning: TavilySearch not installed. Please install langchain-tavily.")
+        else:
+            print("❌ TAVILY_API_KEY not found.")
 
         # Google Custom Search
-        if os.getenv("GOOGLE_SEARCH_API_KEY") and os.getenv("GOOGLE_CSE_ID"):
+        google_api_key = os.getenv("GOOGLE_SEARCH_API_KEY")
+        google_cse_id = os.getenv("GOOGLE_CSE_ID")
+        if google_api_key and google_cse_id:
+            print("✅ GOOGLE_SEARCH_API_KEY and GOOGLE_CSE_ID found.")
             try:
                 from langchain_google_community import GoogleSearchAPIWrapper
                 self.search_providers["google"] = GoogleSearchAPIWrapper(
-                    google_api_key=os.getenv("GOOGLE_SEARCH_API_KEY"),
-                    google_cse_id=os.getenv("GOOGLE_CSE_ID")
+                    google_api_key=google_api_key,
+                    google_cse_id=google_cse_id
                 )
+                print("   -> GoogleSearchAPIWrapper initialized successfully.")
             except ImportError:
-                print("Warning: GoogleSearchAPIWrapper not installed. Please install langchain-google-community.")
+                print("   -> ⚠️ Warning: GoogleSearchAPIWrapper not installed. Please install langchain-google-community.")
+        else:
+            if not google_api_key:
+                print("❌ GOOGLE_SEARCH_API_KEY not found.")
+            if not google_cse_id:
+                print("❌ GOOGLE_CSE_ID not found.")
 
         # DuckDuckGo (APIキー不要、フォールバック用)
         try:
             from langchain_community.utilities.duckduckgo_search import DuckDuckGoSearchAPIWrapper
-            
             self.search_providers["duckduckgo"] = DuckDuckGoSearchAPIWrapper(max_results=self.max_results_per_search)
+            print("✅ DuckDuckGo initialized as a fallback.")
         except ImportError:
-            print("Warning: DuckDuckGoSearch not installed. Please install 'langchain-community' and 'ddgs' packages.")
+            print("⚠️ Warning: DuckDuckGoSearch not installed. Please install 'langchain-community' and 'ddgs' packages.")
 
-        print(f"🔍 WebSearchService: Initialized {len(self.search_providers)} search providers")
+        print(f"--- 🔍 Initialization Complete: {len(self.search_providers)} providers loaded ---\n")
 
     async def perform_search(self, query: str, options: dict = None):
         if options is None:
@@ -65,6 +80,9 @@ class WebSearchService:
             print(f"🔍 WebSearchService: Performing search with query: \"{query}\"")
 
             selected_provider_instance = self._select_provider(provider_pref)
+            provider_name = self._get_provider_name(selected_provider_instance)
+            print(f"   -> Selected provider: {provider_name}") # デバッグプリント追加
+
             if not selected_provider_instance:
                 raise ValueError("利用可能な検索プロバイダーがありません")
 
@@ -95,6 +113,8 @@ class WebSearchService:
             except asyncio.CancelledError:
                 print("⚠️ WebSearchService: Search operation was cancelled")
                 raise  # キャンセルを伝播させる
+            
+            print(f"   -> Raw results from {provider_name}: {raw_results}") # デバッグプリント追加
             
             search_time = (datetime.datetime.now() - start_time).total_seconds() * 1000
 

@@ -39,7 +39,7 @@ web_search_service = WebSearchService()
 command_validator = CommandValidator()
 response_builder = ResponseBuilder()
 agent_dispatcher = AgentDispatcher(llm_adapter, web_search_service, command_validator)
-chat_orchestrator = ChatOrchestrator(agent_dispatcher, conversation_manager, command_validator, response_builder)
+chat_orchestrator = ChatOrchestrator(agent_dispatcher, conversation_manager, command_validator, response_builder, web_search_service)
 
 # チャットエンドポイント
 @app.post("/api/chat")
